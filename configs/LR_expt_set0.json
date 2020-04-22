@@ -1,0 +1,36 @@
+{
+  "model": {
+    "qualitative_features": ["EmploymentStatus", "CitizenDesc", "RaceDesc", "Position"],
+    "binary_features": [],
+    "quantitative_features": ["EngagementSurvey", "PayRate"],
+    "target": "PerformanceScore",
+    "embedding_schemes": {
+      "Position": {
+        "algorithm": "PCA",
+        "target_dim": 10
+      }
+    },
+    "algorithm": "LogisticRegression",
+    "model_parameters": {
+      "device": "cpu",
+      "nb_epoch": 10
+    }
+  },
+  "data": {
+    "path": "exampledataset/HRDataset_v13.json",
+    "missing_value_filling": {"PerformanceScore": "Unknown"},
+    "torchdevice": "cpu"
+  },
+  "train": {
+    "cross_validation": true,
+    "cv_nfold": 3,
+    "heldout_fraction": 0.00,
+    "persist_model": false,
+    "model_path": null
+  },
+  "statistics": {
+    "topN": 3,
+    "compute_class_performance": true,
+    "class_performances_excel": null
+  }
+}

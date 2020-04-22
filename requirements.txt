@@ -1,0 +1,8 @@
+numpy
+pandas
+torch
+tqdm
+scikit-learn
+scipy
+umap
+umap-learn

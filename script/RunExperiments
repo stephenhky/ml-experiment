@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import argparse
+
+argparser = argparse.ArgumentParser(description='ML Experiment Framework')
+argparser.add_argument('configfile', help='Configuration file')
+args = argparser.parse_args()
+
+import os
+import json
+import configparser
+
+from mlexpt.data.adding_features import adding_no_features
+from mlexpt.experiment import add_multiple_features
+from mlexpt.experiment import run_experiment
+
+
+if __name__ == '__main__':
+    # reading config file (.ini or .json)
+    file_ext = os.path.splitext(args.configfile)[1]
+    if file_ext.lower() == '.json':
+        config = json.load(open(args.configfile, 'r'))
+    elif file_ext == '.ini':
+        config = configparser.ConfigParser()
+        config.read(args.configparser)
+    else:
+        raise ValueError('The configuration file should have an extention ' +
+                         'be either ".ini" or ".json", not "{}".')
+
+    # defining feature addition (can be configured)
+    feature_adder = add_multiple_features([adding_no_features])
+    run_experiment(config, feature_adder=feature_adder)

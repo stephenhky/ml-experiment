@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+import argparse
+
+argparser = argparse.ArgumentParser(description='Convert CSV to JSON.')
+argparser.add_argument('csvfile', help='Path of .CSV file.')
+argparser.add_argument('jsonfile', help='Path of output .JSON file.')
+args = argparser.parse_args()
+
+
+import pandas as pd
+from tqdm import tqdm
+
+
+if __name__ == '__main__':
+    df = pd.read_csv(args.csvfile)
+
+    outfile = open(args.jsonfile, 'w')
+    for jsonstr in tqdm(df.apply(lambda row: row.to_json(), axis=1)):
+        outfile.write(jsonstr+'\n')
+
+    outfile.close()
+
