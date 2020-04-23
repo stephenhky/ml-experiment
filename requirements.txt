@@ -1,6 +1,7 @@
 numpy
 pandas
 torch
+torchvision
 tqdm
 scikit-learn
 scipy

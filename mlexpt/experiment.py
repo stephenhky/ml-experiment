@@ -33,7 +33,7 @@ def persist_model_files(dirpath, model, dimred_dict, feature2idx, config):
     if not os.path.exists(dirpath):
         warn('Directory {} does not exist, but is being created...'.format(dirpath))
         os.makedirs(dirpath)
-    if not os.path.isdir():
+    if not os.path.isdir(dirpath):
         raise IOError('Path {} is not a directory!'.format(dirpath))
 
     # save all dicts into metadata JSONs
@@ -48,7 +48,7 @@ def persist_model_files(dirpath, model, dimred_dict, feature2idx, config):
         transformer.trim()
     pickle.dump(dimred_dict, open(os.path.join(dirpath, 'dimred_dict.pkl'), 'wb'))
     # saving column information
-    json.dump(feature2idx, open(os.path.join(dirpath, 'feature2idx.json'), 'wb'))
+    json.dump(feature2idx, open(os.path.join(dirpath, 'feature2idx.json'), 'w'))
 
     # saving metadata
 
@@ -140,9 +140,9 @@ def run_experiment(config,
     top_results_by_class = []
     weighted_results_by_class = []
     hit_results_by_class = []
+    partitions = assign_partitions(nbdata, cv_nfold, heldout_fraction)
     if do_cv:
         print('Cross Validation')
-        partitions = assign_partitions(nbdata, cv_nfold, heldout_fraction)
 
         for cv_round in range(cv_nfold):
             # train
@@ -224,50 +224,81 @@ def run_experiment(config,
         model.fit(dataset.X if isinstance(dataset.X, np.ndarray) else dataset.X.toarray(),
                   dataset.Y if isinstance(dataset.Y, np.ndarray) else dataset.Y.toarray()
                   )
+        print('Saving the final model...')
         persist_model_files(final_model_path, model, dimred_dict, feature2idx, config)
+
+        print('Testing the final model...')
+        heldout_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
+                                                     feature2idx,
+                                                     qual_features,
+                                                     binary_features,
+                                                     quant_features,
+                                                     dimred_dict,
+                                                     labelcol,
+                                                     label2idx,
+                                                     assigned_partitions=partitions,
+                                                     interested_partitions=[-1],
+                                                     device=data_device
+                                                     )
+        if len(heldout_dataset) > 0:
+            predicted_Y = model.predict_proba(
+                heldout_dataset.X if isinstance(heldout_dataset.X, np.ndarray) else heldout_dataset.X.toarray()
+            )
+            final_model_overall_performance, _, _, _ = \
+                extracting_stats_run(predicted_Y,
+                                     heldout_dataset.Y if isinstance(heldout_dataset.Y, np.ndarray) else heldout_dataset.Y.toarray(),
+                                     target_label_dict,
+                                     topN)
 
     finalmodel_training_endtime = time()
 
-    # output statistics
-    print('Total time: {0:.1f} sec'.format(finalmodel_training_endtime-starttime))
-    print('\tData processing time: {0:.1f} sec'.format(data_processing_endtime-starttime))
-    print('\tColumn dictionary generation time: {0:.1f} sec'.format(columndict_generation_endtime-data_processing_endtime))
-    print('\tCross validation time: {0:.1f} sec'.format(cross_validation_endtime-columndict_generation_endtime))
-    print('\tFinal model training time: {0:.1f} sec'.format(finalmodel_training_endtime-cross_validation_endtime))
+    if do_cv:
+        # output statistics
+        print('Total time: {0:.1f} sec'.format(finalmodel_training_endtime-starttime))
+        print('\tData processing time: {0:.1f} sec'.format(data_processing_endtime-starttime))
+        print('\tColumn dictionary generation time: {0:.1f} sec'.format(columndict_generation_endtime-data_processing_endtime))
+        print('\tCross validation time: {0:.1f} sec'.format(cross_validation_endtime-columndict_generation_endtime))
+        print('\tFinal model training time: {0:.1f} sec'.format(finalmodel_training_endtime-cross_validation_endtime))
 
-    # print overall performances
-    average_overall_performance = compute_average_overall_performance(overall_performances)
-    print('Final Measurement')
-    print('=================')
-    print('Top accuracy: {0:.2f}%'.format(average_overall_performance['top1_accuracy']*100))
-    print('Weighted accuracy: {0:.2f}%'.format(average_overall_performance['weighted_accuracy']*100))
-    print('Hit accuracy: {0:.2f}%'.format(average_overall_performance['hit_accuracy']*100))
+        # print overall performances
+        average_overall_performance = compute_average_overall_performance(overall_performances)
+        print('Final Measurement')
+        print('=================')
+        print('Top accuracy: {0:.2f}%'.format(average_overall_performance['top1_accuracy']*100))
+        print('Weighted accuracy: {0:.2f}%'.format(average_overall_performance['weighted_accuracy']*100))
+        print('Hit accuracy: {0:.2f}%'.format(average_overall_performance['hit_accuracy']*100))
 
-    # each class output
-    if to_compute_class_performances:
-        average_top_results_by_class = compute_average_performances_per_class(top_results_by_class,
-                                                                              target_label_dict.keys())
-        average_weighted_results_by_class = compute_average_performances_per_class(weighted_results_by_class,
-                                                                                   target_label_dict.keys())
-        average_hit_result_by_class = compute_average_performances_per_class(hit_results_by_class,
-                                                                             target_label_dict.keys())
+        # each class output
+        if to_compute_class_performances:
+            average_top_results_by_class = compute_average_performances_per_class(top_results_by_class,
+                                                                                  target_label_dict.keys())
+            average_weighted_results_by_class = compute_average_performances_per_class(weighted_results_by_class,
+                                                                                       target_label_dict.keys())
+            average_hit_result_by_class = compute_average_performances_per_class(hit_results_by_class,
+                                                                                 target_label_dict.keys())
 
-        average_top_results_by_class_df = pd.DataFrame.from_dict(average_top_results_by_class, orient='index')
-        print('Top Results by Class')
-        print('====================')
-        print(average_top_results_by_class_df)
-        average_weighted_results_by_class_df = pd.DataFrame.from_dict(average_weighted_results_by_class, orient='index')
-        print('Weighted Results by Class')
-        print('=========================')
-        print(average_weighted_results_by_class_df)
-        average_hit_result_by_class_df = pd.DataFrame.from_dict(average_hit_result_by_class, orient='index')
-        print('Hit Results by Class')
-        print('====================')
-        print(average_hit_result_by_class_df)
-        if class_performance_excel_file is not None:
-            excelWriter = pd.ExcelWriter(class_performance_excel_file)
-            average_top_results_by_class_df.to_excel(excel_writer=excelWriter, sheet_name='Top Results')
-            average_weighted_results_by_class_df.to_excel(excel_writer=excelWriter, sheet_name='Weighted Results')
-            average_hit_result_by_class_df.to_excel(excel_writer=excelWriter, sheet_name='Hit Results')
-            excelWriter.close()
+            average_top_results_by_class_df = pd.DataFrame.from_dict(average_top_results_by_class, orient='index')
+            print('Top Results by Class')
+            print('====================')
+            print(average_top_results_by_class_df)
+            average_weighted_results_by_class_df = pd.DataFrame.from_dict(average_weighted_results_by_class, orient='index')
+            print('Weighted Results by Class')
+            print('=========================')
+            print(average_weighted_results_by_class_df)
+            average_hit_result_by_class_df = pd.DataFrame.from_dict(average_hit_result_by_class, orient='index')
+            print('Hit Results by Class')
+            print('====================')
+            print(average_hit_result_by_class_df)
+            if class_performance_excel_file is not None:
+                excelWriter = pd.ExcelWriter(class_performance_excel_file)
+                average_top_results_by_class_df.to_excel(excel_writer=excelWriter, sheet_name='Top Results')
+                average_weighted_results_by_class_df.to_excel(excel_writer=excelWriter, sheet_name='Weighted Results')
+                average_hit_result_by_class_df.to_excel(excel_writer=excelWriter, sheet_name='Hit Results')
+                excelWriter.close()
 
+    if to_persist_model and len(heldout_dataset) > 0:
+        print('Held-out Measurement')
+        print('=================')
+        print('Top accuracy: {0:.2f}%'.format(final_model_overall_performance['top1_accuracy']*100))
+        print('Weighted accuracy: {0:.2f}%'.format(final_model_overall_performance['weighted_accuracy']*100))
+        print('Hit accuracy: {0:.2f}%'.format(final_model_overall_performance['hit_accuracy']*100))

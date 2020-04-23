@@ -70,7 +70,9 @@ def process_data(traindatafilepath, qual_features, binary_features, quant_featur
     return tempdir, nbdata
 
 
-def assign_partitions(nbdata, cv_nfold, heldout_fraction):
+def assign_partitions(nbdata, cv_nfold, heldout_fraction, seed=None):
+    if seed is not None:
+        np.random.seed(seed)
     return np.random.choice([-1] + list(range(cv_nfold)),  # -1 indicating hold-out set
                             p=[heldout_fraction] + [(1 - heldout_fraction) / cv_nfold] * cv_nfold,
                             size=nbdata)
