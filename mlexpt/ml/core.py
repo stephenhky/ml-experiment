@@ -8,7 +8,7 @@ class ExperimentalClassifier(ABC):
     def predict_proba(self, X, *args, **kwargs):
         pass
 
-    def persist(self, fileobj):
+    def persist(self, path):
         pass
 
     def trim(self):
@@ -22,7 +22,7 @@ class ExperimentalEncoder(ABC):
     def transform(self, X, *args, **kwargs):
         pass
 
-    def persist(self, fileobj):
+    def persist(self, path):
         pass
 
     def trim(self):

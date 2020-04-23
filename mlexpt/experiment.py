@@ -37,22 +37,41 @@ def persist_model_files(dirpath, model, dimred_dict, feature2idx, config):
         raise IOError('Path {} is not a directory!'.format(dirpath))
 
     # save all dicts into metadata JSONs
-    metadata = {}
+    metadata = {
+        'model': {
+            key: val
+            for key, val in config['model'].items()
+            if key in ['qualitative_features',
+                       'binary_features',
+                       'quantitative_features',
+                       'target',
+                       'algorithm']
+                  },
+        'dimred_dict': {
+            feature: {
+                key: val
+                for key, val in dimred_dict[feature].items()
+                if key in ['dictionary', 'target_dim', 'algorithm']
+            }
+            for feature in dimred_dict.keys()
+        },
+        'feature2idx': feature2idx
+    }
 
     # saving the model
     model.persist(open(os.path.join(dirpath, 'modelobj.pkl'), 'wb'))
     # saving the information about encodings
-    # TODO: split the dict
     for feature in dimred_dict:
         transformer = dimred_dict[feature]['transformer']
         transformer.trim()
-    pickle.dump(dimred_dict, open(os.path.join(dirpath, 'dimred_dict.pkl'), 'wb'))
-    # saving column information
-    json.dump(feature2idx, open(os.path.join(dirpath, 'feature2idx.json'), 'w'))
+        transformer_modelpath = feature + '_'+dimred_dict[feature]['algorithm'] + \
+                                    '_{}.pkl'.format(dimred_dict[feature]['target_dim'])
+        transformer_modelpath = os.path.join(dirpath, transformer_modelpath)
+        metadata['dimred_dict'][feature]['transformer_modelpath'] = transformer_modelpath
+        transformer.persist(transformer_modelpath)
 
     # saving metadata
-
-
+    json.dump(metadata, open(os.path.join(dirpath, 'metadata.json'), 'w'))
 
 
 def run_experiment(config,

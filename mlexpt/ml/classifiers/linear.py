@@ -68,5 +68,6 @@ class MulticlassLogisticRegression(ExperimentalClassifier):
         y = self.activation_function(self.logregs(torch.FloatTensor(x)))
         return y.detach().cpu().numpy()
 
-    def persist(self, fileobj):
-        pass
+    def persist(self, path):
+        torch.save(self.logregs.state_dict(), path)
+
