@@ -1,4 +1,5 @@
 
+import json
 from functools import partial
 from time import time
 import os
@@ -28,22 +29,30 @@ def add_multiple_features(add_feature_functions):
     return partial(returned_function, add_feature_functions=add_feature_functions)
 
 
-def persist_model_files(dirpath, model, dimred_dict, feature2idx):
+def persist_model_files(dirpath, model, dimred_dict, feature2idx, config):
     if not os.path.exists(dirpath):
         warn('Directory {} does not exist, but is being created...'.format(dirpath))
         os.makedirs(dirpath)
     if not os.path.isdir():
         raise IOError('Path {} is not a directory!'.format(dirpath))
 
+    # save all dicts into metadata JSONs
+    metadata = {}
+
     # saving the model
     model.persist(open(os.path.join(dirpath, 'modelobj.pkl'), 'wb'))
     # saving the information about encodings
+    # TODO: split the dict
     for feature in dimred_dict:
         transformer = dimred_dict[feature]['transformer']
         transformer.trim()
     pickle.dump(dimred_dict, open(os.path.join(dirpath, 'dimred_dict.pkl'), 'wb'))
     # saving column information
-    pickle.dump(feature2idx, open(os.path.join(dirpath, 'feature2idx.pkl'), 'wb'))
+    json.dump(feature2idx, open(os.path.join(dirpath, 'feature2idx.json'), 'wb'))
+
+    # saving metadata
+
+
 
 
 def run_experiment(config,
@@ -215,7 +224,7 @@ def run_experiment(config,
         model.fit(dataset.X if isinstance(dataset.X, np.ndarray) else dataset.X.toarray(),
                   dataset.Y if isinstance(dataset.Y, np.ndarray) else dataset.Y.toarray()
                   )
-        persist_model_files(final_model_path, model, dimred_dict, feature2idx)
+        persist_model_files(final_model_path, model, dimred_dict, feature2idx, config)
 
     finalmodel_training_endtime = time()
 
