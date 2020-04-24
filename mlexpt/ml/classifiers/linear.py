@@ -71,3 +71,9 @@ class MulticlassLogisticRegression(ExperimentalClassifier):
     def persist(self, path):
         torch.save(self.logregs.state_dict(), path)
 
+    @classmethod
+    def load(cls, modelpath, nbinputs, nboutputs, device='cpu'):
+        model = cls(device=torch.device(device))
+        model.logregs = TorchLogisticRegression(nbinputs, nboutputs)
+        model.logregs.load_state_dict(torch.load(modelpath))
+        return model

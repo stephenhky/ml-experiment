@@ -29,7 +29,7 @@ def add_multiple_features(add_feature_functions):
     return partial(returned_function, add_feature_functions=add_feature_functions)
 
 
-def persist_model_files(dirpath, model, dimred_dict, feature2idx, config):
+def persist_model_files(dirpath, model, dimred_dict, feature2idx, label2idx, config):
     if not os.path.exists(dirpath):
         warn('Directory {} does not exist, but is being created...'.format(dirpath))
         os.makedirs(dirpath)
@@ -55,7 +55,8 @@ def persist_model_files(dirpath, model, dimred_dict, feature2idx, config):
             }
             for feature in dimred_dict.keys()
         },
-        'feature2idx': feature2idx
+        'feature2idx': feature2idx,
+        'label2idx': label2idx
     }
 
     # saving the model
@@ -64,10 +65,10 @@ def persist_model_files(dirpath, model, dimred_dict, feature2idx, config):
     for feature in dimred_dict:
         transformer = dimred_dict[feature]['transformer']
         transformer.trim()
-        transformer_modelpath = feature + '_'+dimred_dict[feature]['algorithm'] + \
-                                    '_{}.pkl'.format(dimred_dict[feature]['target_dim'])
-        transformer_modelpath = os.path.join(dirpath, transformer_modelpath)
-        metadata['dimred_dict'][feature]['transformer_modelpath'] = transformer_modelpath
+        transformer_modelfilename = feature + '_'+dimred_dict[feature]['algorithm'] + \
+                                        '_{}.pkl'.format(dimred_dict[feature]['target_dim'])
+        transformer_modelpath = os.path.join(dirpath, transformer_modelfilename)
+        metadata['dimred_dict'][feature]['transformer_model_filename'] = transformer_modelfilename
         transformer.persist(transformer_modelpath)
 
     # saving metadata
