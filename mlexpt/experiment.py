@@ -245,7 +245,7 @@ def run_experiment(config,
                   dataset.Y if isinstance(dataset.Y, np.ndarray) else dataset.Y.toarray()
                   )
         print('Saving the final model...')
-        persist_model_files(final_model_path, model, dimred_dict, feature2idx, config)
+        persist_model_files(final_model_path, model, dimred_dict, feature2idx, label2idx, config)
 
         print('Testing the final model...')
         heldout_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),

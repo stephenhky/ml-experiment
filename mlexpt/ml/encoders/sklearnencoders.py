@@ -1,4 +1,5 @@
 
+import joblib
 from sklearn.decomposition import PCA
 from umap import UMAP
 
@@ -12,8 +13,8 @@ class ExperimentalPCA(PCA, ExperimentalEncoder):
     def transform(self, X, *args, **kwargs):
         PCA.transform(self, X)
 
-    def persist(self, fileobj):
-        pass
+    def persist(self, path):
+        joblib.dump(self, path)
 
     def trim(self):
         pass
