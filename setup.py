@@ -17,9 +17,9 @@ def package_description():
 
 
 setup(name='ml-experiment',
-      version="0.0.1a01",
+      version="0.0.1",
       description="Machine Learning Experiment Framework",
-      long_description="Fast prototyping of machine learning experiments",
+      long_description=package_description(),
       classifiers=[
           "Topic :: Scientific/Engineering :: Artificial Intelligence",
           "Topic :: Scientific/Engineering :: Mathematics",

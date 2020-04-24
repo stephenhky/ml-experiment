@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Framework for fast machine learning experiment.
+Framework for fast prototyping of machine learning experiment.
 
 There will be tutorials and documentations.
 
