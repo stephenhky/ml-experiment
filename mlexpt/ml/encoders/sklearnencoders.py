@@ -19,6 +19,10 @@ class ExperimentalPCA(PCA, ExperimentalEncoder):
     def trim(self):
         pass
 
+    @classmethod
+    def load(cls, path):
+        return joblib.load(path)
+
 
 class ExperimentalUMAP(UMAP, ExperimentalEncoder):
     def fit(self, X, *args, **kwargs):
@@ -31,4 +35,8 @@ class ExperimentalUMAP(UMAP, ExperimentalEncoder):
         pass
 
     def trim(self):
+        pass
+
+    @classmethod
+    def load(cls, path):
         pass

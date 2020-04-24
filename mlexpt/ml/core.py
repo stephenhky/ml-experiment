@@ -15,7 +15,7 @@ class ExperimentalClassifier(ABC):
         pass
 
     @classmethod
-    def load(cls, *args, **kwargs):
+    def load(cls, path, *args, **kwargs):
         pass
 
 
@@ -33,6 +33,6 @@ class ExperimentalEncoder(ABC):
         pass
 
     @classmethod
-    def load(cls, *args, **kwargs):
+    def load(cls, path, *args, **kwargs):
         pass
 
