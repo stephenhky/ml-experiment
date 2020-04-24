@@ -9,8 +9,9 @@ args = argparser.parse_args()
 import os
 import json
 import configparser
+from functools import partial
 
-from mlexpt.data.adding_features import adding_no_features
+from mlexpt.data.adding_features import adding_no_features, convert_label_to_str
 from mlexpt.experiment import add_multiple_features
 from mlexpt.experiment import run_experiment
 
@@ -27,6 +28,10 @@ if __name__ == '__main__':
         raise ValueError('The configuration file should have an extention ' +
                          'be either ".ini" or ".json", not "{}".')
 
+    # identify label
+    label = config['model']['target']
+
     # defining feature addition (can be configured)
-    feature_adder = add_multiple_features([adding_no_features])
+    feature_adder = add_multiple_features([adding_no_features,
+                                           partial(convert_label_to_str, label=label)])
     run_experiment(config, feature_adder=feature_adder)

@@ -1,0 +1,32 @@
+{
+  "model": {
+    "qualitative_features": ["text"],
+    "binary_features": [],
+    "quantitative_features": [],
+    "target": "polarity",
+    "embedding_schemes": {
+    },
+    "algorithm": "LogisticRegression",
+    "model_parameters": {
+      "device": "cpu",
+      "nb_epoch": 100
+    }
+  },
+  "data": {
+    "path": "/Users/stephenhky/Downloads/trainingandtestdata/testdata.json",
+    "missing_value_filling": {},
+    "torchdevice": "cpu"
+  },
+  "train": {
+    "cross_validation": true,
+    "cv_nfold": 5,
+    "heldout_fraction": 0.05,
+    "persist_model": true,
+    "model_path": "/Users/stephenhky/Downloads/trainingandtestdata/model"
+  },
+  "statistics": {
+    "topN": 2,
+    "compute_class_performance": true,
+    "class_performances_excel": null
+  }
+}

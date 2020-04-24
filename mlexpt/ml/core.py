@@ -14,6 +14,10 @@ class ExperimentalClassifier(ABC):
     def trim(self):
         pass
 
+    @classmethod
+    def load(cls, path, *args, **kwargs):
+        pass
+
 
 class ExperimentalEncoder(ABC):
     def fit(self, X, *args, **kwargs):
@@ -27,3 +31,8 @@ class ExperimentalEncoder(ABC):
 
     def trim(self):
         pass
+
+    @classmethod
+    def load(cls, path, *args, **kwargs):
+        pass
+
