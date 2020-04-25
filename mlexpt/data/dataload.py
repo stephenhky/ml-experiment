@@ -60,11 +60,11 @@ def process_data(traindatafilepath, qual_features, binary_features, quant_featur
                                                 columns_to_keep=qual_features+binary_features+quant_features+[target_label],
                                                 feature_adder=feature_adder,
                                                 missing_val_default=missing_val_default)):
-        print('\tRead {} lines...'.format(i))
         if i % nb_lines_per_tempfile == 0:
             if tmpfile is not None:
                 tmpfile.close()
             tmpfile = open(os.path.join(tempdir.name, 'data_{0:09d}.json'.format(fileid)), 'w')
+            print('\tRead {} lines...'.format(i))
         nbdata += 1
         tmpfile.write(json.dumps(datum)+'\n')
     tmpfile.close()
