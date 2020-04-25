@@ -25,14 +25,16 @@ class TorchLogisticRegression(nn.Module):
 
 
 class MulticlassLogisticRegression(ExperimentalClassifier):
-    def __init__(self, device=torch.device('cpu'), nb_epoch=100):
+    def __init__(self, device=torch.device('cpu'), nb_epoch=100, batch_size=10000):
         self.device = device
         self.nb_epoch = nb_epoch
+        self.batch_size = batch_size
 
     def fit(self, x, y):
         # x.shape = (m, n)
         # y.shape = (m, nboutputs)
-        dataloader = DataLoader(np.concatenate([x, y], axis=1), batch_size=x.shape[0])
+        dataloader = DataLoader(np.concatenate([x, y], axis=1),
+                                batch_size=min(x.shape[0], self.batch_size))
 
         self.logregs = TorchLogisticRegression(x.shape[1], y.shape[1], self.device)
         print('Logistic regression trained on: '+self.logregs.device.type)
