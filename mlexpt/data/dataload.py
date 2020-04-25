@@ -38,7 +38,10 @@ def iterate_json_files_directory(dir,
                                  data_filter=lambda datum: True,
                                  missing_val_default={}
                                  ):
+    print('Reading {}'.format(dir))
+    print('\tColumns: {}'.format(', '.join(columns_to_keep if columns_to_keep is not None else 'ALL')))
     for filepath in glob(os.path.join(dir, '*.json')):
+        print('\tReading {}'.format(filepath))
         for datum in iterate_json_data(filepath,
                                        columns_to_keep=columns_to_keep,
                                        feature_adder=feature_adder,
