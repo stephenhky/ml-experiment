@@ -60,6 +60,7 @@ def process_data(traindatafilepath, qual_features, binary_features, quant_featur
                                                 columns_to_keep=qual_features+binary_features+quant_features+[target_label],
                                                 feature_adder=feature_adder,
                                                 missing_val_default=missing_val_default)):
+        print('\tRead {} lines...')
         if i % nb_lines_per_tempfile == 0:
             if tmpfile is not None:
                 tmpfile.close()

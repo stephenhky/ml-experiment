@@ -150,6 +150,7 @@ def run_experiment(config,
     starttime = time()
 
     # loading data, adding features, trimming the data
+    print('Reading data....')
     tempdir, nbdata = process_data(datapath,
                                    qual_features, binary_features, quant_features,
                                    labelcol,
