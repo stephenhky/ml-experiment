@@ -1,6 +1,7 @@
 
+import math
 import json
-from functools import partial
+from functools import partial, reduce
 from time import time
 import os
 from warnings import warn
@@ -21,6 +22,7 @@ from .utils.datatransform import generate_columndict_withembeddings, Numerically
 
 
 NB_LINES_PER_TEMPFILE = 500
+BATCH_SIZE = 10000
 
 def add_multiple_features(add_feature_functions):
     def returned_function(datum, add_feature_functions):
@@ -122,7 +124,8 @@ class CompactExperimentalModel:
 def run_experiment(config,
                    feature_adder=adding_no_features,
                    nb_lines_per_tempfile=NB_LINES_PER_TEMPFILE,
-                   model_class=None):
+                   model_class=None,
+                   batch_size=BATCH_SIZE):
     ## model config
     qual_features = config['model'].get('qualitative_features', [])
     binary_features = config['model'].get('binary_features', [])
@@ -248,7 +251,13 @@ def run_experiment(config,
                                                       interested_partitions=[cv_round],
                                                       device=data_device
                                                       )
-            predicted_Y = model.predict_proba(test_dataset.X if isinstance(test_dataset.X, np.ndarray) else test_dataset.X.toarray())
+            nbtestdata = test_dataset.X.shape[0]
+            predicted_Y = reduce(lambda m1, m2: np.append(m1, m2, axis=0), [model.predict_proba(
+                test_dataset.X[i*batch_size:min((i+1)*batch_size, nbtestdata), :]
+                if isinstance(test_dataset.X, np.ndarray)
+                else test_dataset.X.toarray()[i*batch_size:min((i+1)*batch_size, nbtestdata), :])
+                for i in range(math.ceil(nbtestdata / batch_size))])
+            # predicted_Y = model.predict_proba(test_dataset.X if isinstance(test_dataset.X, np.ndarray) else test_dataset.X.toarray())
 
             # statistics
             overall_performance, top_result_by_class, weighted_result_by_class, hit_result_by_class = \
