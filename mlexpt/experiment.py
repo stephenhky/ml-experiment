@@ -1,5 +1,4 @@
 
-import math
 import json
 from functools import partial, reduce
 from time import time
@@ -9,6 +8,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 import joblib
+from torch.utils.data import DataLoader
 
 from .data.adding_features import adding_no_features
 from .data.dataload import process_data, iterate_json_files_directory, assign_partitions
@@ -17,12 +17,12 @@ from .metrics.statistics import extracting_stats_run, compute_average_overall_pe
 from .ml.models import classifiers_dict
 from .utils.core import generate_columndict
 from .utils.embeddings import embed_features
-from .utils.datatransform import generate_columndict_withembeddings, NumericallyPreparedDataset, \
-    convert_data_to_matrix_with_embeddings
+from .utils.datatransform import generate_columndict_withembeddings, convert_data_to_matrix_with_embeddings, \
+    NumericallyPreparedDataset, CachedNumericallyPreparedDataset
 
 
-NB_LINES_PER_TEMPFILE = 10000
-BATCH_SIZE = 10000
+NB_LINES_PER_TEMPFILE = 500
+BATCH_SIZE = 500
 
 def add_multiple_features(add_feature_functions):
     def returned_function(datum, add_feature_functions):
@@ -144,6 +144,7 @@ def run_experiment(config,
     datapath = config['data']['path']
     missing_val_default = config['data']['missing_value_filling']
     data_device = config['data']['torchdevice']
+    h5dir = config['data'].get('h5dir', None)
     # statistics
     topN = config['statistics']['topN']
     to_compute_class_performances = config['statistics'].get('compute_class_performance', False)
@@ -215,56 +216,94 @@ def run_experiment(config,
         for cv_round in range(cv_nfold):
             # train
             print('Round {}'.format(cv_round))
-            train_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
-                                                       feature2idx,
-                                                       qual_features,
-                                                       binary_features,
-                                                       quant_features,
-                                                       dimred_dict,
-                                                       labelcol,
-                                                       label2idx,
-                                                       assigned_partitions=partitions,
-                                                       interested_partitions=[partition
-                                                                              for partition in range(cv_nfold)
-                                                                              if partition != cv_round],
-                                                       device=data_device
-                                                       )
+            # train_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
+            #                                            feature2idx,
+            #                                            qual_features,
+            #                                            binary_features,
+            #                                            quant_features,
+            #                                            dimred_dict,
+            #                                            labelcol,
+            #                                            label2idx,
+            #                                            assigned_partitions=partitions,
+            #                                            interested_partitions=[partition
+            #                                                                   for partition in range(cv_nfold)
+            #                                                                   if partition != cv_round],
+            #                                            device=data_device
+            #                                            )
+            train_dataset = CachedNumericallyPreparedDataset(tempdir.name,
+                                                             batch_size,
+                                                             feature2idx,
+                                                             qual_features,
+                                                             binary_features,
+                                                             quant_features,
+                                                             dimred_dict,
+                                                             labelcol,
+                                                             label2idx,
+                                                             assigned_partitions=partitions,
+                                                             interested_partitions=[partition
+                                                                                    for partition in range(cv_nfold)
+                                                                                    if partition != cv_round],
+                                                             device=data_device, h5dir='.'
+                                                             )
 
             if model_class is None:
                 model = classifiers_dict[algorithm](**model_param)
             else:
                 model = model_class(**model_param)
-            model.fit(train_dataset.X if isinstance(train_dataset.X, np.ndarray) else train_dataset.X.toarray(),
-                      train_dataset.Y if isinstance(train_dataset.Y, np.ndarray) else train_dataset.Y.toarray()
-                      )
+            model.fit(train_dataset)
 
             # test
-            test_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
-                                                      feature2idx,
-                                                      qual_features,
-                                                      binary_features,
-                                                      quant_features,
-                                                      dimred_dict,
-                                                      labelcol,
-                                                      label2idx,
-                                                      assigned_partitions=partitions,
-                                                      interested_partitions=[cv_round],
-                                                      device=data_device
-                                                      )
-            nbtestdata = test_dataset.X.shape[0]
-            predicted_Y = reduce(lambda m1, m2: np.append(m1, m2, axis=0), [model.predict_proba(
-                test_dataset.X[i*batch_size:min((i+1)*batch_size, nbtestdata), :]
-                if isinstance(test_dataset.X, np.ndarray)
-                else test_dataset.X.toarray()[i*batch_size:min((i+1)*batch_size, nbtestdata), :])
-                for i in range(math.ceil(nbtestdata / batch_size))])
+            # test_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
+            #                                           feature2idx,
+            #                                           qual_features,
+            #                                           binary_features,
+            #                                           quant_features,
+            #                                           dimred_dict,
+            #                                           labelcol,
+            #                                           label2idx,
+            #                                           assigned_partitions=partitions,
+            #                                           interested_partitions=[cv_round],
+            #                                           device=data_device
+            #                                           )
+            test_dataset = CachedNumericallyPreparedDataset(tempdir.name,
+                                                            batch_size,
+                                                            feature2idx,
+                                                            qual_features,
+                                                            binary_features,
+                                                            quant_features,
+                                                            dimred_dict,
+                                                            labelcol,
+                                                            label2idx,
+                                                            assigned_partitions=partitions,
+                                                            interested_partitions=[cv_round],
+                                                            device=data_device
+                                                           )
+            nbtestdata = len(test_dataset)
+            test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
+            predicted_Y = None
+            test_Y = None
+            for data in test_dataloader:
+                x, test_y = data
+                new_pred_y = model.predict_proba(x)
+                if predicted_Y is None:
+                    predicted_Y = new_pred_y
+                else:
+                    predicted_Y = np.append(predicted_Y, new_pred_y, axis=0)
+                if test_Y is None:
+                    test_Y = np.array(test_y)
+                else:
+                    test_Y = np.append(test_Y, np.array(test_y), axis=0)
+
+            # predicted_Y = reduce(lambda m1, m2: np.append(m1, m2, axis=0), [model.predict_proba(
+            #     test_dataset.X[i*batch_size:min((i+1)*batch_size, nbtestdata), :]
+            #     if isinstance(test_dataset.X, np.ndarray)
+            #     else test_dataset.X.toarray()[i*batch_size:min((i+1)*batch_size, nbtestdata), :])
+            #     for i in range(math.ceil(nbtestdata / batch_size))])
             # predicted_Y = model.predict_proba(test_dataset.X if isinstance(test_dataset.X, np.ndarray) else test_dataset.X.toarray())
 
             # statistics
             overall_performance, top_result_by_class, weighted_result_by_class, hit_result_by_class = \
-                extracting_stats_run(predicted_Y,
-                                     test_dataset.Y if isinstance(test_dataset.Y, np.ndarray) else test_dataset.Y.toarray(),
-                                     target_label_dict,
-                                     topN)
+                extracting_stats_run(predicted_Y, test_Y, target_label_dict, topN)
             overall_performances.append(overall_performance)
             top_results_by_class.append(top_result_by_class)
             weighted_results_by_class.append(weighted_result_by_class)
@@ -277,52 +316,75 @@ def run_experiment(config,
     # train a final model
     if to_persist_model:
         print('Training final model...')
-        dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
-                                             feature2idx,
-                                             qual_features,
-                                             binary_features,
-                                             quant_features,
-                                             dimred_dict,
-                                             labelcol,
-                                             label2idx,
-                                             assigned_partitions=partitions,
-                                             interested_partitions=[partition
-                                                                    for partition in range(cv_nfold)
-                                                                    if partition >= 0],
-                                             device=data_device
-                                             )
+        # dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
+        #                                      feature2idx,
+        #                                      qual_features,
+        #                                      binary_features,
+        #                                      quant_features,
+        #                                      dimred_dict,
+        #                                      labelcol,
+        #                                      label2idx,
+        #                                      assigned_partitions=partitions,
+        #                                      interested_partitions=[partition
+        #                                                             for partition in range(cv_nfold)
+        #                                                             if partition >= 0],
+        #                                      device=data_device
+        #                                      )
+        dataset = CachedNumericallyPreparedDataset(tempdir.name,
+                                                   batch_size,
+                                                   feature2idx,
+                                                   qual_features,
+                                                   binary_features,
+                                                   quant_features,
+                                                   dimred_dict,
+                                                   labelcol,
+                                                   label2idx,
+                                                   assigned_partitions=partitions,
+                                                   interested_partitions=[partition
+                                                                          for partition in range(cv_nfold)
+                                                                          if partition >= 0],
+                                                   device=data_device
+                                                   )
         if model_class is None:
             model = classifiers_dict[algorithm](**model_param)
         else:
             model = model_class(**model_param)
-        model.fit(dataset.X if isinstance(dataset.X, np.ndarray) else dataset.X.toarray(),
-                  dataset.Y if isinstance(dataset.Y, np.ndarray) else dataset.Y.toarray()
-                  )
+        model.fit(dataset)
         print('Saving the final model...')
         persist_model_files(final_model_path, model, dimred_dict, feature2idx, label2idx, config)
 
         print('Testing the final model...')
-        heldout_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
-                                                     feature2idx,
-                                                     qual_features,
-                                                     binary_features,
-                                                     quant_features,
-                                                     dimred_dict,
-                                                     labelcol,
-                                                     label2idx,
-                                                     assigned_partitions=partitions,
-                                                     interested_partitions=[-1],
-                                                     device=data_device
-                                                     )
+        heldout_dataset = CachedNumericallyPreparedDataset(tempdir.name,
+                                                           batch_size,
+                                                           feature2idx,
+                                                           qual_features,
+                                                           binary_features,
+                                                           quant_features,
+                                                           dimred_dict,
+                                                           labelcol,
+                                                           label2idx,
+                                                           assigned_partitions=partitions,
+                                                           interested_partitions=[-1],
+                                                           device=data_device
+                                                           )
         if len(heldout_dataset) > 0:
-            predicted_Y = model.predict_proba(
-                heldout_dataset.X if isinstance(heldout_dataset.X, np.ndarray) else heldout_dataset.X.toarray()
-            )
+            heldout_dataloader = DataLoader(heldout_dataset, batch_size=batch_size)
+            predicted_Y = None
+            test_Y = None
+            for data in heldout_dataloader:
+                x, test_y = data
+                new_pred_y = model.predict_proba(x)
+                if predicted_Y is None:
+                    predicted_Y = new_pred_y
+                else:
+                    predicted_Y = np.append(predicted_Y, new_pred_y, axis=0)
+                if test_Y is None:
+                    test_Y = np.array(test_y)
+                else:
+                    test_Y = np.append(test_Y, np.array(test_y), axis=0)
+
             final_model_overall_performance, _, _, _ = \
-                extracting_stats_run(predicted_Y,
-                                     heldout_dataset.Y if isinstance(heldout_dataset.Y, np.ndarray) else heldout_dataset.Y.toarray(),
-                                     target_label_dict,
-                                     topN)
+                extracting_stats_run(predicted_Y, test_Y, target_label_dict, topN)
 
     finalmodel_training_endtime = time()
 
