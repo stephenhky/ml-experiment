@@ -5,7 +5,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ..core import ExperimentalClassifier
+from ..core import ExperimentalClassifier, ExperimentalDatasetClassifier
 
 
 class TorchLogisticRegression(nn.Module):
@@ -62,6 +62,66 @@ class MulticlassLogisticRegression(ExperimentalClassifier):
                     loss = criterion(pred_Y, target_indices)
                 else:
                     loss = criterion(pred_Y, Y.to(self.logregs.device))
+
+                loss.backward()
+                optimizer.step()
+
+    def predict_proba(self, x):
+        y = self.activation_function(self.logregs(torch.FloatTensor(x)))
+        return y.detach().cpu().numpy()
+
+    def persist(self, path):
+        torch.save(self.logregs.state_dict(), path)
+
+    @classmethod
+    def load(cls, modelpath, device='cpu'):
+        state_dict = torch.load(modelpath)
+        nboutputs, nbinputs = state_dict['linearblock.weight'].shape
+        model = cls(device=torch.device(device))
+        model.logregs = TorchLogisticRegression(nbinputs, nboutputs)
+        model.logregs.load_state_dict(state_dict)
+        model.activation_function = nn.Sigmoid() if nboutputs > 1 else nn.Softmax()
+        return model
+
+
+class MulticlassBatchDatasetLogisticRegression(ExperimentalDatasetClassifier):
+    def __init__(self, device=torch.device('cpu'), nb_epoch=100, batch_size=10000):
+        self.device = device
+        self.nb_epoch = nb_epoch
+        self.batch_size = batch_size
+
+    def fit(self, dataset):
+        # x.shape = (m, n)
+        # y.shape = (m, nboutputs)
+        dataloader = DataLoader(dataset, batch_size=self.batch_size)
+
+        input_dim = dataset.nbinputs
+        nbclasses = dataset.nboutputs
+
+        self.logregs = TorchLogisticRegression(input_dim, nbclasses, self.device)
+        print('Logistic regression trained on: '+self.logregs.device.type)
+
+        if nbclasses > 1:
+            criterion = nn.CrossEntropyLoss().to(self.logregs.device)
+            self.activation_function = nn.Sigmoid()
+        else:
+            criterion = nn.BCEWithLogitsLoss().to(self.logregs.device)
+            self.activation_function = nn.Softmax()
+        optimizer = torch.optim.Adam(self.logregs.parameters(), lr=0.01)
+
+        for _ in tqdm(range(self.nb_epoch)):
+            for data in dataloader:
+                optimizer.zero_grad()
+                X, Y = data
+                X = X.to(self.logregs.device)
+                Y = Y.to(self.logregs.device)
+                pred_Y = self.logregs(X)
+
+                if nbclasses > 1:
+                    target_indices = torch.max(Y, 1)[1]
+                    loss = criterion(pred_Y, target_indices)
+                else:
+                    loss = criterion(pred_Y, Y)
 
                 loss.backward()
                 optimizer.step()
