@@ -216,20 +216,6 @@ def run_experiment(config,
         for cv_round in range(cv_nfold):
             # train
             print('Round {}'.format(cv_round))
-            # train_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
-            #                                            feature2idx,
-            #                                            qual_features,
-            #                                            binary_features,
-            #                                            quant_features,
-            #                                            dimred_dict,
-            #                                            labelcol,
-            #                                            label2idx,
-            #                                            assigned_partitions=partitions,
-            #                                            interested_partitions=[partition
-            #                                                                   for partition in range(cv_nfold)
-            #                                                                   if partition != cv_round],
-            #                                            device=data_device
-            #                                            )
             train_dataset = CachedNumericallyPreparedDataset(tempdir.name,
                                                              batch_size,
                                                              feature2idx,
@@ -253,18 +239,6 @@ def run_experiment(config,
             model.fit_batch(train_dataset)
 
             # test
-            # test_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
-            #                                           feature2idx,
-            #                                           qual_features,
-            #                                           binary_features,
-            #                                           quant_features,
-            #                                           dimred_dict,
-            #                                           labelcol,
-            #                                           label2idx,
-            #                                           assigned_partitions=partitions,
-            #                                           interested_partitions=[cv_round],
-            #                                           device=data_device
-            #                                           )
             test_dataset = CachedNumericallyPreparedDataset(tempdir.name,
                                                             batch_size,
                                                             feature2idx,
@@ -289,13 +263,6 @@ def run_experiment(config,
                 else:
                     test_Y = np.append(test_Y, np.array(test_y), axis=0)
 
-            # predicted_Y = reduce(lambda m1, m2: np.append(m1, m2, axis=0), [model.predict_proba(
-            #     test_dataset.X[i*batch_size:min((i+1)*batch_size, nbtestdata), :]
-            #     if isinstance(test_dataset.X, np.ndarray)
-            #     else test_dataset.X.toarray()[i*batch_size:min((i+1)*batch_size, nbtestdata), :])
-            #     for i in range(math.ceil(nbtestdata / batch_size))])
-            # predicted_Y = model.predict_proba(test_dataset.X if isinstance(test_dataset.X, np.ndarray) else test_dataset.X.toarray())
-
             # statistics
             overall_performance, top_result_by_class, weighted_result_by_class, hit_result_by_class = \
                 extracting_stats_run(predicted_Y, test_Y, target_label_dict, topN)
@@ -311,20 +278,6 @@ def run_experiment(config,
     # train a final model
     if to_persist_model:
         print('Training final model...')
-        # dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
-        #                                      feature2idx,
-        #                                      qual_features,
-        #                                      binary_features,
-        #                                      quant_features,
-        #                                      dimred_dict,
-        #                                      labelcol,
-        #                                      label2idx,
-        #                                      assigned_partitions=partitions,
-        #                                      interested_partitions=[partition
-        #                                                             for partition in range(cv_nfold)
-        #                                                             if partition >= 0],
-        #                                      device=data_device
-        #                                      )
         dataset = CachedNumericallyPreparedDataset(tempdir.name,
                                                    batch_size,
                                                    feature2idx,

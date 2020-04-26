@@ -6,8 +6,8 @@
     "target": "polarity",
     "embedding_schemes": {
       "text": {
-        "algorithm": "PCA",
-        "target_dim": 400
+        "algorithm": "IncrementalPCA",
+        "target_dim": 100
       }
     },
     "algorithm": "LogisticRegression",

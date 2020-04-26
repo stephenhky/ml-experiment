@@ -24,7 +24,7 @@ def embed_features(dr_config, alldata):
                                         pickle.load(open(dr_config[feature]['filepath'], 'rb'))
                                         )
             dr_config[feature]['target_dim'] = transformer.target_dim
-        elif dr_config[feature]['algorithm'] in ['PCA', 'UMAP']:
+        elif dr_config[feature]['algorithm'] in encoders_dict.keys():
             transformer = encoders_dict[dr_config[feature]['algorithm']](n_components=dr_config[feature]['target_dim'])
         else:
             warn('Encoder {} is not configured.'.format(dr_config[feature]['algorithm']))

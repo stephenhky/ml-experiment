@@ -29,7 +29,13 @@ class ExperimentalEncoder(ABC):
     def fit(self, X, *args, **kwargs):
         pass
 
+    def fit_batch(self, dataset, *args, **kwargs):
+        pass
+
     def transform(self, X, *args, **kwargs):
+        pass
+
+    def transform_batch(self, dataset, *args, **kwargs):
         pass
 
     def persist(self, path):
