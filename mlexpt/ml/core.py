@@ -5,25 +5,13 @@ class ExperimentalClassifier(ABC):
     def fit(self, X, Y, *args, **kwargs):
         pass
 
-    def predict_proba(self, X, *args, **kwargs):
-        pass
-
-    def persist(self, path):
-        pass
-
-    def trim(self):
-        pass
-
-    @classmethod
-    def load(cls, path, *args, **kwargs):
-        pass
-
-
-class ExperimentalDatasetClassifier(ABC):
-    def fit(self, dataset, *args, **kwargs):
+    def fit_batch(self, dataset, *args, **kwargs):
         pass
 
     def predict_proba(self, X, *args, **kwargs):
+        pass
+
+    def predict_proba_batch(self, dataset, *args, **kwargs):
         pass
 
     def persist(self, path):

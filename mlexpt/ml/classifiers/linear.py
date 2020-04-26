@@ -5,7 +5,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ..core import ExperimentalClassifier, ExperimentalDatasetClassifier
+from ..core import ExperimentalClassifier
 
 
 class TorchLogisticRegression(nn.Module):
@@ -66,31 +66,7 @@ class MulticlassLogisticRegression(ExperimentalClassifier):
                 loss.backward()
                 optimizer.step()
 
-    def predict_proba(self, x):
-        y = self.activation_function(self.logregs(torch.FloatTensor(x)))
-        return y.detach().cpu().numpy()
-
-    def persist(self, path):
-        torch.save(self.logregs.state_dict(), path)
-
-    @classmethod
-    def load(cls, modelpath, device='cpu'):
-        state_dict = torch.load(modelpath)
-        nboutputs, nbinputs = state_dict['linearblock.weight'].shape
-        model = cls(device=torch.device(device))
-        model.logregs = TorchLogisticRegression(nbinputs, nboutputs)
-        model.logregs.load_state_dict(state_dict)
-        model.activation_function = nn.Sigmoid() if nboutputs > 1 else nn.Softmax()
-        return model
-
-
-class MulticlassBatchDatasetLogisticRegression(ExperimentalDatasetClassifier):
-    def __init__(self, device=torch.device('cpu'), nb_epoch=100, batch_size=10000):
-        self.device = device
-        self.nb_epoch = nb_epoch
-        self.batch_size = batch_size
-
-    def fit(self, numerically_batched_dataset):
+    def fit_batch(self, numerically_batched_dataset):
         # x.shape = (m, n)
         # y.shape = (m, nboutputs)
         input_dim = numerically_batched_dataset.nbinputs
@@ -128,6 +104,18 @@ class MulticlassBatchDatasetLogisticRegression(ExperimentalDatasetClassifier):
         y = self.activation_function(self.logregs(torch.FloatTensor(x)))
         return y.detach().cpu().numpy()
 
+    def predict_proba_batch(self, dataset):
+        predicted_Y = None
+        dataloader = DataLoader(dataset, batch_size=self.batch_size)
+        for data in dataloader:
+            x, _ = data
+            new_pred_y = self.activation_function(self.logregs(x))
+            if predicted_Y is None:
+                predicted_Y = new_pred_y.detach().cpu().numpy()
+            else:
+                predicted_Y = np.append(predicted_Y, new_pred_y.detach().cpu().numpy(), axis=0)
+        return predicted_Y
+
     def persist(self, path):
         torch.save(self.logregs.state_dict(), path)
 
@@ -140,3 +128,4 @@ class MulticlassBatchDatasetLogisticRegression(ExperimentalDatasetClassifier):
         model.logregs.load_state_dict(state_dict)
         model.activation_function = nn.Sigmoid() if nboutputs > 1 else nn.Softmax()
         return model
+

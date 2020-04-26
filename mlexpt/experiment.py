@@ -243,14 +243,14 @@ def run_experiment(config,
                                                              interested_partitions=[partition
                                                                                     for partition in range(cv_nfold)
                                                                                     if partition != cv_round],
-                                                             device=data_device, h5dir='.'
+                                                             device=data_device,
                                                              )
 
             if model_class is None:
                 model = classifiers_dict[algorithm](**model_param)
             else:
                 model = model_class(**model_param)
-            model.fit(train_dataset)
+            model.fit_batch(train_dataset)
 
             # test
             # test_dataset = NumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
@@ -279,16 +279,11 @@ def run_experiment(config,
                                                             device=data_device
                                                            )
             nbtestdata = len(test_dataset)
+            predicted_Y = model.predict_proba_batch(test_dataset)
             test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
-            predicted_Y = None
             test_Y = None
             for data in test_dataloader:
-                x, test_y = data
-                new_pred_y = model.predict_proba(x)
-                if predicted_Y is None:
-                    predicted_Y = new_pred_y
-                else:
-                    predicted_Y = np.append(predicted_Y, new_pred_y, axis=0)
+                _, test_y = data
                 if test_Y is None:
                     test_Y = np.array(test_y)
                 else:
@@ -343,13 +338,14 @@ def run_experiment(config,
                                                    interested_partitions=[partition
                                                                           for partition in range(cv_nfold)
                                                                           if partition >= 0],
-                                                   device=data_device
+                                                   device=data_device,
+                                                   h5dir=h5dir
                                                    )
         if model_class is None:
             model = classifiers_dict[algorithm](**model_param)
         else:
             model = model_class(**model_param)
-        model.fit(dataset)
+        model.fit_batch(dataset)
         print('Saving the final model...')
         persist_model_files(final_model_path, model, dimred_dict, feature2idx, label2idx, config)
 

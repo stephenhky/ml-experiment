@@ -1,12 +1,12 @@
 
-from .classifiers.linear import MulticlassLogisticRegression, MulticlassBatchDatasetLogisticRegression
+from .classifiers.linear import MulticlassLogisticRegression
 
 from .encoders.sklearnencoders import ExperimentalPCA, ExperimentalUMAP
 from .encoders.dictembedding import DictEmbedding
 
 
 classifiers_dict = {
-    'LogisticRegression': MulticlassBatchDatasetLogisticRegression,
+    'LogisticRegression': MulticlassLogisticRegression,
 }
 
 
