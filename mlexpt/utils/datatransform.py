@@ -1,8 +1,16 @@
+
+import os
+from glob import glob
+import tempfile
+
+import pandas as pd
 import torch
 from torch import Tensor
 from torch.utils.data import Dataset
 
 from ..utils.core import generate_columndict, convert_data_to_matrix
+from ..data.dataload import iterate_json_files_directory
+from ..data.adding_features import adding_no_features
 
 
 def generate_columndict_withembeddings(data_iterable, qual_features, binary_features, quant_features, dimred_dict):
@@ -79,3 +87,76 @@ class NumericallyPreparedDataset(Dataset):
 
     def __getitem__(self, idx):
         return Tensor(self.X[idx, :]), Tensor(self.Y[idx, :])
+
+
+class CachedNumericallyPreparedDataset(Dataset):
+    def __init__(self,
+                 datadir,   # JSON format
+                 batch_size,
+                 feature2idx,
+                 qual_features, binary_features, quant_features,
+                 dimred_dict,
+                 labelcol, label2idx,
+                 assigned_partitions=None, interested_partitions=[],
+                 h5dir=None,
+                 filename_fmt='data_{0:09d}.h5',
+                 device='cpu'):
+        super(NumericallyPreparedDataset, self).__init__()
+        self.datadir = datadir
+        self.batch_size = batch_size
+        self.feature2idx = feature2idx
+        self.qual_features = qual_features
+        self.binary_features = binary_features
+        self.quant_features = quant_features
+        self.dimred_dict = dimred_dict
+        self.labelcol = labelcol
+        self.label2idx = label2idx
+        self.assigned_partitions = assigned_partitions
+        self.interested_partitions = interested_partitions
+        self.filename_fmt = filename_fmt
+        self.device = torch.device(device)
+
+        # writing to h5 files
+        nbdata = 0
+        fileid = 0
+        self.h5dir = tempfile.TemporaryDirectory() if h5dir is None else h5dir
+        batch_data = []
+        idx2feature = [None]*len(feature2idx)
+        for col, i in feature2idx.items():
+            idx2feature[i] = col
+        for i, datum in iterate_json_files_directory(self.datadir,
+                                                     feature_adder=adding_no_features):
+            if self.assigned_partitions is not None and self.assigned_partitions[i] in self.interested_partitions:
+                batch_data.append(datum)
+                nbdata += 1
+            if nbdata % batch_size == 0:
+                self.write_data_h5(batch_data, idx2feature, self.filename_fmt.format(fileid))
+                fileid += 1
+                batch_data = []
+
+        if len(batch_data) > 0:
+            self.write_data_h5(batch_data, idx2feature, self.filename_fmt.format(fileid))
+        self.nbdata = nbdata
+
+    def write_data_h5(self, batch_data, columns, filename):
+        X, Y = convert_data_to_matrix_with_embeddings(batch_data,
+                                                      self.feature2idx,
+                                                      self.qual_features,
+                                                      self.binary_features,
+                                                      self.quant_features,
+                                                      self.dimred_dict,
+                                                      self.labelcol,
+                                                      self.label2idx)
+        df = pd.DataFrame(X, columns=columns)
+        df['Y'] = Y
+        df.to_hdf(filename)
+
+    def __len__(self):
+        return self.nbdata
+
+    def __getitem__(self, idx):
+        fileid = idx // self.batch_size
+        pos = idx % self.batch_size
+        df = pd.read_hdf(self.filename_fmt.format(fileid))
+        return Tensor(df.iloc[pos, :-1]), Tensor(self.Y[idx, [-1]])
+

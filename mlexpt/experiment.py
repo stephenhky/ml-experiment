@@ -21,7 +21,7 @@ from .utils.datatransform import generate_columndict_withembeddings, Numerically
     convert_data_to_matrix_with_embeddings
 
 
-NB_LINES_PER_TEMPFILE = 500
+NB_LINES_PER_TEMPFILE = 10000
 BATCH_SIZE = 10000
 
 def add_multiple_features(add_feature_functions):

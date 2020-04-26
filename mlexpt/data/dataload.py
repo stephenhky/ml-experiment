@@ -52,8 +52,9 @@ def iterate_json_files_directory(dir,
 def process_data(traindatafilepath, qual_features, binary_features, quant_features,
                  target_label,
                  feature_adder=adding_no_features,
-                 nb_lines_per_tempfile=500,
-                 missing_val_default={}):
+                 nb_lines_per_tempfile=10000,
+                 missing_val_default={},
+                 filename_fmt='data_{0:09d}.json'):
     tempdir = tempfile.TemporaryDirectory()
     fileid = 0
     tmpfile = None
@@ -65,7 +66,7 @@ def process_data(traindatafilepath, qual_features, binary_features, quant_featur
         if i % nb_lines_per_tempfile == 0:
             if tmpfile is not None:
                 tmpfile.close()
-            tmpfile = open(os.path.join(tempdir.name, 'data_{0:09d}.json'.format(fileid)), 'w')
+            tmpfile = open(os.path.join(tempdir.name, filename_fmt.format(fileid)), 'w')
             fileid += 1
             print('\tRead {} lines...'.format(i))
         nbdata += 1
