@@ -1,5 +1,5 @@
 numpy==1.18.3
-pandas
+pandas==1.0.3
 torch
 torchvision
 tqdm
