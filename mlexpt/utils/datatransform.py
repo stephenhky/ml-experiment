@@ -147,6 +147,7 @@ class CachedNumericallyPreparedDataset(Dataset):
         if len(batch_data) > 0:
             self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
         self.nbdata = nbdata
+        self.nbfiles = fileid + 1
 
         self.nbinputs = len(self.feature2idx)
         self.nboutputs = len(self.label2idx)
@@ -176,16 +177,9 @@ class CachedNumericallyPreparedDataset(Dataset):
         pos = idx % self.batch_size
         if self.current_fileid != fileid:
             self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(fileid)))
-        try:
-            return Tensor(self.df.iloc[pos, :self.nbinputs]), Tensor(self.df.iloc[pos, -self.nboutputs:])
-        except IndexError as e:
-            print(self.filename_fmt.format(fileid))
-            print(pos)
-            print(idx)
-            print(self.df)
+        return Tensor(self.df.iloc[pos, :self.nbinputs]), Tensor(self.df.iloc[pos, -self.nboutputs:])
 
-            print(np.array(self.df.iloc[pos, :self.nbinputs]))
-            print(np.array(self.df.iloc[idx, -self.nboutputs:]))
-            raise e
-
-
+    def get_batch(self, fileid):
+        self.current_fileid = fileid
+        self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(fileid)))
+        return Tensor(np.array(self.df.iloc[:, :self.nbinputs])), Tensor(np.array(self.df.iloc[:, -self.nboutputs:]))

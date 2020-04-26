@@ -90,13 +90,11 @@ class MulticlassBatchDatasetLogisticRegression(ExperimentalDatasetClassifier):
         self.nb_epoch = nb_epoch
         self.batch_size = batch_size
 
-    def fit(self, dataset):
+    def fit(self, numerically_batched_dataset):
         # x.shape = (m, n)
         # y.shape = (m, nboutputs)
-        dataloader = DataLoader(dataset, batch_size=self.batch_size)
-
-        input_dim = dataset.nbinputs
-        nbclasses = dataset.nboutputs
+        input_dim = numerically_batched_dataset.nbinputs
+        nbclasses = numerically_batched_dataset.nboutputs
 
         self.logregs = TorchLogisticRegression(input_dim, nbclasses, self.device)
         print('Logistic regression trained on: '+self.logregs.device.type)
@@ -110,9 +108,9 @@ class MulticlassBatchDatasetLogisticRegression(ExperimentalDatasetClassifier):
         optimizer = torch.optim.Adam(self.logregs.parameters(), lr=0.01)
 
         for _ in tqdm(range(self.nb_epoch)):
-            for data in dataloader:
+            for fileid in range(numerically_batched_dataset.nbfiles):
                 optimizer.zero_grad()
-                X, Y = data
+                X, Y = numerically_batched_dataset.get_batch(fileid)
                 X = X.to(self.logregs.device)
                 Y = Y.to(self.logregs.device)
                 pred_Y = self.logregs(X)
