@@ -18,7 +18,7 @@ class ExperimentalPCA(PCA, ExperimentalEncoder):
         x_tofit = None
         for fileid in range(dataset.nbfiles):
             X, _ = dataset.get_batch(fileid)
-            x_tofit = np.array(X) if x_tofit is None else np.append(x_tofit, np.array(X))
+            x_tofit = np.array(X) if x_tofit is None else np.append(x_tofit, np.array(X), axis=0)
         PCA.fit(x_tofit, *args, **kwargs)
 
     def transform(self, X, *args, **kwargs):
@@ -28,7 +28,7 @@ class ExperimentalPCA(PCA, ExperimentalEncoder):
         x_totransform = None
         for fileid in range(dataset.nbfiles):
             X, _ = dataset.get_batch(fileid)
-            x_totransform = np.array(X) if x_totransform is None else np.append(x_totransform, np.array(X))
+            x_totransform = np.array(X) if x_totransform is None else np.append(x_totransform, np.array(X), axis=0)
         return PCA.transform(x_totransform)
 
     def persist(self, path):
@@ -66,7 +66,7 @@ class ExperimentalIncrementalPCA(IncrementalPCA, ExperimentalEncoder):
         for fileid in range(dataset.nbfiles):
             X, _ = dataset.get_batch(fileid)
             X = np.array(X)
-            x_totransform = np.array(X) if x_totransform is None else np.append(x_totransform, np.array(X))
+            x_totransform = np.array(X) if x_totransform is None else np.append(x_totransform, np.array(X), axis=0)
         return IncrementalPCA.transform(self, x_totransform)
 
     def persist(self, path):
