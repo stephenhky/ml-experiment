@@ -135,14 +135,15 @@ class CachedNumericallyPreparedDataset(Dataset):
         for col, i in label2idx.items():
             idx2label[i] = col
         for i, datum in enumerate(iterate_json_files_directory(self.datadir,
-                                                     feature_adder=adding_no_features)):
-            if self.assigned_partitions is not None and self.assigned_partitions[i] in self.interested_partitions:
-                batch_data.append(datum)
-                nbdata += 1
-                if nbdata % batch_size == 0:
-                    self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
-                    fileid += 1
-                    batch_data = []
+                                                               feature_adder=adding_no_features)):
+            if self.assigned_partitions is not None and not (self.assigned_partitions[i] in self.interested_partitions):
+                continue
+            batch_data.append(datum)
+            nbdata += 1
+            if nbdata % batch_size == 0:
+                self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
+                fileid += 1
+                batch_data = []
 
         if len(batch_data) > 0:
             self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))

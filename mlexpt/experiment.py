@@ -16,9 +16,9 @@ from .metrics.statistics import extracting_stats_run, compute_average_overall_pe
     compute_average_performances_per_class, count_occurences_of_feature_values
 from .ml.models import classifiers_dict
 from .utils.core import generate_columndict
-from .utils.embeddings import embed_features
+from .utils.embeddings import embed_features_cacheddataset
 from .utils.datatransform import generate_columndict_withembeddings, convert_data_to_matrix_with_embeddings, \
-    NumericallyPreparedDataset, CachedNumericallyPreparedDataset
+    CachedNumericallyPreparedDataset
 
 
 NB_LINES_PER_TEMPFILE = 500
@@ -179,13 +179,14 @@ def run_experiment(config,
 
     # dimensionality reduction of embedding
     print('Embedding')
-    dimred_dict = embed_features(dr_config,
-                                 [datum
-                                  for datum in iterate_json_files_directory(tempdir.name,
-                                                                            columns_to_keep=list(dr_config.keys())
-                                                                            )
-                                  ]
-                                 )
+    # dimred_dict = embed_features(dr_config,
+    #                              [datum
+    #                               for datum in iterate_json_files_directory(tempdir.name,
+    #                                                                         columns_to_keep=list(dr_config.keys())
+    #                                                                         )
+    #                               ]
+    #                              )
+    dimred_dict = embed_features_cacheddataset(dr_config, tempdir.name, batch_size=BATCH_SIZE)
 
     # generating columndict with dimensionality reduction or embedding
     print('Generating columns dictionary...')

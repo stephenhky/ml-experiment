@@ -14,22 +14,8 @@ class ExperimentalPCA(PCA, ExperimentalEncoder):
     def fit(self, X, *args, **kwargs):
         PCA.fit(self, X, *args, **kwargs)
 
-    def fit_batch(self, dataset, *args, **kwargs):
-        x_tofit = None
-        for fileid in range(dataset.nbfiles):
-            X, _ = dataset.get_batch(fileid)
-            x_tofit = np.array(X) if x_tofit is None else np.append(x_tofit, np.array(X), axis=0)
-        PCA.fit(x_tofit, *args, **kwargs)
-
     def transform(self, X, *args, **kwargs):
         return PCA.transform(self, X)
-
-    def transform_batch(self, dataset, *args, **kwargs):
-        x_totransform = None
-        for fileid in range(dataset.nbfiles):
-            X, _ = dataset.get_batch(fileid)
-            x_totransform = np.array(X) if x_totransform is None else np.append(x_totransform, np.array(X), axis=0)
-        return PCA.transform(x_totransform)
 
     def persist(self, path):
         joblib.dump(self, path)
@@ -60,14 +46,6 @@ class ExperimentalIncrementalPCA(IncrementalPCA, ExperimentalEncoder):
 
     def transform(self, X):
         IncrementalPCA.transform(self, X)
-
-    def transform_batch(self, dataset, *args, **kwargs):
-        x_totransform = None
-        for fileid in range(dataset.nbfiles):
-            X, _ = dataset.get_batch(fileid)
-            X = np.array(X)
-            x_totransform = np.array(X) if x_totransform is None else np.append(x_totransform, np.array(X), axis=0)
-        return IncrementalPCA.transform(self, x_totransform)
 
     def persist(self, path):
         joblib.dump(self, path)
