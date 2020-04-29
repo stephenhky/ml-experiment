@@ -3,6 +3,7 @@ import numpy as np
 import joblib
 from sklearn.decomposition import PCA, IncrementalPCA
 from umap import UMAP
+from tqdm import tqdm
 
 from ..core import ExperimentalEncoder
 
@@ -39,7 +40,8 @@ class ExperimentalIncrementalPCA(IncrementalPCA, ExperimentalEncoder):
         IncrementalPCA.partial_fit(self, X, y=y, check_input=check_input)
 
     def fit_batch(self, dataset, *args, **kwargs):
-        for fileid in range(dataset.nbfiles):
+        print('Fitting IncrementalPCA...')
+        for fileid in tqdm(range(dataset.nbfiles)):
             X, _ = dataset.get_batch(fileid)
             X = np.array(X)
             IncrementalPCA.partial_fit(self, X, *args, **kwargs)
