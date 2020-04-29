@@ -64,7 +64,10 @@ def convert_data_to_matrix(data, feature2idx, qual_features, binary_features, qu
             X[rowidx, colidx] = datum[quant_feature]
 
         if labelcol is not None and label2idx is not None:
-            target_label = datum[labelcol]
-            Y[rowidx, label2idx[labelcol+':'+target_label]] = 1
+            target_labels = datum[labelcol]
+            if not isinstance(target_labels, list):
+                target_labels = [target_labels]
+            for label in target_labels:
+                Y[rowidx, label2idx[labelcol+':'+label]] = 1
 
     return X, Y
