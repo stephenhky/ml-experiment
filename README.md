@@ -13,4 +13,5 @@ There will be tutorials and documentations.
 
 ## News
 
+* 04/29/2020: '0.0.2' released.
 * 04/24/2020: '0.0.1' released.
