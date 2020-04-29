@@ -53,6 +53,7 @@ def process_data(traindatafilepath, qual_features, binary_features, quant_featur
                  target_label,
                  feature_adder=adding_no_features,
                  nb_lines_per_tempfile=10000,
+                 data_filter=lambda datum: True,
                  missing_val_default={},
                  filename_fmt='data_{0:09d}.json'):
     tempdir = tempfile.TemporaryDirectory()
@@ -62,6 +63,7 @@ def process_data(traindatafilepath, qual_features, binary_features, quant_featur
     for i, datum in enumerate(iterate_json_data(traindatafilepath,
                                                 columns_to_keep=qual_features+binary_features+quant_features+[target_label],
                                                 feature_adder=feature_adder,
+                                                data_filter=data_filter,
                                                 missing_val_default=missing_val_default)):
         if i % nb_lines_per_tempfile == 0:
             if tmpfile is not None:

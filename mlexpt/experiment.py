@@ -124,6 +124,7 @@ class CompactExperimentalModel:
 def run_experiment(config,
                    feature_adder=adding_no_features,
                    nb_lines_per_tempfile=NB_LINES_PER_TEMPFILE,
+                   data_filter=lambda datum: True,
                    model_class=None,
                    batch_size=BATCH_SIZE):
     ## model config
@@ -160,6 +161,7 @@ def run_experiment(config,
                                    labelcol,
                                    feature_adder=feature_adder,
                                    nb_lines_per_tempfile=nb_lines_per_tempfile,
+                                   data_filter=data_filter,
                                    missing_val_default=missing_val_default)
     print("Temporary directory: {}".format(tempdir.name))
     print('Number of data: {}'.format(nbdata))
