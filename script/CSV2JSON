@@ -5,6 +5,7 @@ import argparse
 argparser = argparse.ArgumentParser(description='Convert CSV to JSON.')
 argparser.add_argument('csvfile', help='Path of .CSV file.')
 argparser.add_argument('jsonfile', help='Path of output .JSON file.')
+argparser.add_argument('--delimiter', default=None, help='delimiter (default: None (standing for ",")')
 argparser.add_argument('--header', nargs='+', help='Headers (optional)', default=None)
 args = argparser.parse_args()
 
@@ -14,10 +15,12 @@ from tqdm import tqdm
 
 
 if __name__ == '__main__':
+    print('Reading {}...'.format(args.csvfile))
+    print('Delimiter = {}'.format(args.delimiter))
     if args.header is None:
-        df = pd.read_csv(args.csvfile, engine='python')
+        df = pd.read_csv(args.csvfile, delimiter=args.delimiter, engine='python')
     else:
-        df = pd.read_csv(args.csvfile, header=None, engine='python')
+        df = pd.read_csv(args.csvfile, delimiter=args.delimiter, header=None, engine='python')
         df.columns = args.header
 
     outfile = open(args.jsonfile, 'w')

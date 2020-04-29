@@ -18,3 +18,4 @@ class DictEmbedding(ExperimentalEncoder):
 
     def transform(self, X):
         return np.matmul(X, self.transform_matrix)
+

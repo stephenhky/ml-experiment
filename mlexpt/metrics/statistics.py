@@ -124,5 +124,9 @@ def count_occurences_of_feature_values(data_iterable, qual_feature):
     count_dict = defaultdict(lambda : 0)
     for datum in data_iterable:
         featureval = datum[qual_feature]
-        count_dict[featureval] += 1
+        if isinstance(featureval, list):
+            for val in featureval:
+                count_dict[val] += 1
+        else:
+            count_dict[featureval] += 1
     return dict(count_dict)
