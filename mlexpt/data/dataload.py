@@ -38,6 +38,8 @@ def iterate_json_files_directory(dir,
                                  data_filter=lambda datum: True,
                                  missing_val_default={}
                                  ):
+    print('\tReading {}'.format(dir))
+    print('\tColumns: {}'.format(', '.join(columns_to_keep) if columns_to_keep is not None else 'ALL'))
     for filepath in glob(os.path.join(dir, '*.json')):
         for datum in iterate_json_data(filepath,
                                        columns_to_keep=columns_to_keep,
@@ -50,8 +52,10 @@ def iterate_json_files_directory(dir,
 def process_data(traindatafilepath, qual_features, binary_features, quant_features,
                  target_label,
                  feature_adder=adding_no_features,
-                 nb_lines_per_tempfile=500,
-                 missing_val_default={}):
+                 nb_lines_per_tempfile=10000,
+                 data_filter=lambda datum: True,
+                 missing_val_default={},
+                 filename_fmt='data_{0:09d}.json'):
     tempdir = tempfile.TemporaryDirectory()
     fileid = 0
     tmpfile = None
@@ -59,11 +63,14 @@ def process_data(traindatafilepath, qual_features, binary_features, quant_featur
     for i, datum in enumerate(iterate_json_data(traindatafilepath,
                                                 columns_to_keep=qual_features+binary_features+quant_features+[target_label],
                                                 feature_adder=feature_adder,
+                                                data_filter=data_filter,
                                                 missing_val_default=missing_val_default)):
         if i % nb_lines_per_tempfile == 0:
             if tmpfile is not None:
                 tmpfile.close()
-            tmpfile = open(os.path.join(tempdir.name, 'data_{0:09d}.json'.format(fileid)), 'w')
+            tmpfile = open(os.path.join(tempdir.name, filename_fmt.format(fileid)), 'w')
+            fileid += 1
+            print('\tRead {} lines...'.format(i))
         nbdata += 1
         tmpfile.write(json.dumps(datum)+'\n')
     tmpfile.close()
