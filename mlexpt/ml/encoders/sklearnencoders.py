@@ -9,8 +9,12 @@ from ..core import ExperimentalEncoder
 
 
 class ExperimentalPCA(PCA, ExperimentalEncoder):
-    def __init__(self, *args, **kwargs):
-        PCA.__init__(self, *args, **kwargs)
+    def __init__(self, n_components=None, copy=True, whiten=False,
+                 svd_solver='auto', tol=0.0, iterated_power='auto',
+                 random_state=None):
+        PCA.__init__(self, n_components=n_components, copy=copy, whiten=whiten,
+                 svd_solver=svd_solver, tol=tol, iterated_power=iterated_power,
+                 random_state=random_state)
 
     def fit(self, X, *args, **kwargs):
         PCA.fit(self, X, *args, **kwargs)
@@ -30,8 +34,16 @@ class ExperimentalPCA(PCA, ExperimentalEncoder):
 
 
 class ExperimentalIncrementalPCA(IncrementalPCA, ExperimentalEncoder):
-    def __init__(self, *args, **kwargs):
-        IncrementalPCA.__init__(self, *args, **kwargs)
+    def __init__(self,
+                 n_components=None,
+                 whiten=False,
+                 copy=True,
+                 batch_size=None):
+        IncrementalPCA.__init__(self,
+                                n_components=n_components,
+                                whiten=whiten,
+                                copy=copy,
+                                batch_size=batch_size)
 
     def fit(self, X, *args, **kwargs):
         IncrementalPCA.fit(self, X, *args, **kwargs)
