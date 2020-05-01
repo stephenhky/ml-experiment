@@ -6,7 +6,7 @@ from .core import generate_columndict, convert_data_to_matrix
 from ..data.dataload import iterate_json_files_directory
 from ..ml.encoders.dictembedding import DictEmbedding
 from ..ml.models import encoders_dict
-from .datatransform import CachedNumericallyPreparedDataset
+from .datatransform import PreparingCachedNumericallyPreparedDataset
 
 
 def embed_features(dr_config, alldata):
@@ -63,15 +63,15 @@ def embed_features_cacheddataset(dr_config, datadir, batch_size=10000):
             warn('Encoder {} is not configured.'.format(dr_config[feature]['algorithm']))
             continue
 
-        dataset = CachedNumericallyPreparedDataset(datadir,
-                                                   batch_size,
-                                                   featureval2idx,
-                                                   [feature],
-                                                   [],
-                                                   [],
-                                                   dimred_dict,
-                                                   None,
-                                                   {})
+        dataset = PreparingCachedNumericallyPreparedDataset(datadir,
+                                                            batch_size,
+                                                            featureval2idx,
+                                                            [feature],
+                                                            [],
+                                                            [],
+                                                            dimred_dict,
+                                                            None,
+                                                            {})
         transformer.fit_batch(dataset)
         dimred_dict[feature] = {'transformer': transformer,
                                 'dictionary': featureval2idx,

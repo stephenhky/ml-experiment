@@ -49,7 +49,7 @@ def convert_data_to_matrix_with_embeddings(data,
     return X, Y
 
 
-class NumericallyPreparedDataset(Dataset):
+class CachedNumericallyPreparedDataset(Dataset):
     def __init__(self,
                  data_iterator,
                  feature2idx,
@@ -58,7 +58,7 @@ class NumericallyPreparedDataset(Dataset):
                  labelcol, label2idx,
                  assigned_partitions=None, interested_partitions=[],
                  device='cpu'):
-        super(NumericallyPreparedDataset, self).__init__()
+        super(CachedNumericallyPreparedDataset, self).__init__()
         self.feature2idx = feature2idx
         self.qual_features = qual_features
         self.binary_features = binary_features
@@ -92,20 +92,39 @@ class NumericallyPreparedDataset(Dataset):
         return x, y
 
 
-class CachedNumericallyPreparedDataset(Dataset):
+class PreparingCachedNumericallyPreparedDataset(Dataset):
     def __init__(self,
-                 datadir,   # JSON format
+                 h5dir,
                  batch_size,
                  feature2idx,
                  qual_features, binary_features, quant_features,
                  dimred_dict,
                  labelcol, label2idx,
                  assigned_partitions=None, interested_partitions=[],
-                 h5dir=None,
                  filename_fmt='data_{0:09d}.h5',
                  device='cpu'):
-        super(CachedNumericallyPreparedDataset, self).__init__()
-        self.datadir = datadir
+        super(PreparingCachedNumericallyPreparedDataset, self).__init__()
+        self.store_parameter(h5dir,
+                 batch_size,
+                 feature2idx,
+                 qual_features, binary_features, quant_features,
+                 dimred_dict,
+                 labelcol, label2idx,
+                 assigned_partitions, interested_partitions,
+                 filename_fmt,
+                 device)
+        self.count_data()
+
+    def store_parameter(self, h5dir,
+                 batch_size,
+                 feature2idx,
+                 qual_features, binary_features, quant_features,
+                 dimred_dict,
+                 labelcol, label2idx,
+                 assigned_partitions, interested_partitions,
+                 filename_fmt,
+                 device):
+        self.h5dir = h5dir
         self.batch_size = batch_size
         self.feature2idx = feature2idx
         self.qual_features = qual_features
@@ -119,56 +138,17 @@ class CachedNumericallyPreparedDataset(Dataset):
         self.filename_fmt = filename_fmt
         self.device = torch.device(device)
 
-        # writing to h5 files
-        nbdata = 0
-        fileid = 0
-        if h5dir is None:
-            self.h5tempdir = tempfile.TemporaryDirectory()
-            self.h5dir = self.h5tempdir.name
-        else:
-            self.h5dir = h5dir
-        batch_data = []
-        idx2feature = [None]*len(feature2idx)
-        for col, i in feature2idx.items():
-            idx2feature[i] = col
-        idx2label = [None]*len(label2idx)
-        for col, i in label2idx.items():
-            idx2label[i] = col
-        for i, datum in enumerate(iterate_json_files_directory(self.datadir,
-                                                               feature_adder=adding_no_features)):
-            if self.assigned_partitions is not None and not (self.assigned_partitions[i] in self.interested_partitions):
-                continue
-            batch_data.append(datum)
-            nbdata += 1
-            if nbdata % batch_size == 0:
-                self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
-                fileid += 1
-                batch_data = []
-
-        if len(batch_data) > 0:
-            self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
-        self.nbdata = nbdata
-        self.nbfiles = fileid + 1
-
+        # calculation
         self.nbinputs = len(self.feature2idx)
         self.nboutputs = len(self.label2idx)
 
-        # cached
-        self.current_fileid = -1
-
-    def write_data_h5(self, batch_data, xcolumns, ycolumns, filename):
-        X, Y = convert_data_to_matrix_with_embeddings(batch_data,
-                                                      self.feature2idx,
-                                                      self.qual_features,
-                                                      self.binary_features,
-                                                      self.quant_features,
-                                                      self.dimred_dict,
-                                                      self.labelcol,
-                                                      self.label2idx)
-        df = pd.DataFrame(X.toarray(), columns=xcolumns)
-        for i in range(Y.shape[1]):
-            df[ycolumns[i]] = Y.toarray()[:, i]
-        df.to_hdf(os.path.join(self.h5dir, filename), key=os.path.basename(filename)[:-3])
+    def count_data(self):
+        filepaths = glob(os.path.join(self.h5dir, '*.h5'))
+        self.nbfiles = len(filepaths)
+        self.nbdata = 0
+        for filepath in filepaths:
+            df = pd.read_hdf(filepath)
+            self.nbdata += len(df)
 
     def __len__(self):
         return self.nbdata
@@ -184,3 +164,80 @@ class CachedNumericallyPreparedDataset(Dataset):
         self.current_fileid = fileid
         self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(fileid)))
         return Tensor(np.array(self.df.iloc[:, :self.nbinputs])), Tensor(np.array(self.df.iloc[:, -self.nboutputs:]))
+
+
+class PreparingCachedNumericallyPreparedDataset(PreparingCachedNumericallyPreparedDataset):
+    def __init__(self,
+                 datadir,   # JSON format
+                 batch_size,
+                 feature2idx,
+                 qual_features, binary_features, quant_features,
+                 dimred_dict,
+                 labelcol, label2idx,
+                 assigned_partitions=None, interested_partitions=[],
+                 h5dir=None,
+                 filename_fmt='data_{0:09d}.h5',
+                 device='cpu'):
+        Dataset.__init__()
+        self.store_parameter(h5dir,
+                 batch_size,
+                 feature2idx,
+                 qual_features, binary_features, quant_features,
+                 dimred_dict,
+                 labelcol, label2idx,
+                 assigned_partitions, interested_partitions,
+                 filename_fmt,
+                 device)
+        self.datadir = datadir
+        self.prepare_h5_files(h5dir)
+
+    def prepare_h5_files(self, h5dir):
+        # writing to h5 files
+        nbdata = 0
+        fileid = 0
+        if h5dir is None:
+            self.h5tempdir = tempfile.TemporaryDirectory()
+            self.h5dir = self.h5tempdir.name
+        else:
+            self.h5dir = h5dir
+        batch_data = []
+        idx2feature = [None]*len(self.feature2idx)
+        for col, i in self.feature2idx.items():
+            idx2feature[i] = col
+        idx2label = [None]*len(self.label2idx)
+        for col, i in self.label2idx.items():
+            idx2label[i] = col
+        for i, datum in enumerate(iterate_json_files_directory(self.datadir,
+                                                               feature_adder=adding_no_features)):
+            if self.assigned_partitions is not None and not (self.assigned_partitions[i] in self.interested_partitions):
+                continue
+            batch_data.append(datum)
+            nbdata += 1
+            if nbdata % self.batch_size == 0:
+                self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
+                fileid += 1
+                batch_data = []
+
+        if len(batch_data) > 0:
+            self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
+        self.nbdata = nbdata
+        self.nbfiles = fileid + 1
+
+        # cached
+        self.current_fileid = -1
+
+
+    def write_data_h5(self, batch_data, xcolumns, ycolumns, filename):
+        X, Y = convert_data_to_matrix_with_embeddings(batch_data,
+                                                      self.feature2idx,
+                                                      self.qual_features,
+                                                      self.binary_features,
+                                                      self.quant_features,
+                                                      self.dimred_dict,
+                                                      self.labelcol,
+                                                      self.label2idx)
+        df = pd.DataFrame(X.toarray(), columns=xcolumns)
+        for i in range(Y.shape[1]):
+            df[ycolumns[i]] = Y.toarray()[:, i]
+        df.to_hdf(os.path.join(self.h5dir, filename), key=os.path.basename(filename)[:-3])
+
