@@ -1,4 +1,5 @@
 
+import math
 import os
 from glob import glob
 import tempfile
@@ -113,6 +114,7 @@ class CachedNumericallyPreparedDataset(Dataset):
                  assigned_partitions, interested_partitions,
                  filename_fmt,
                  device)
+        self.reshuffle_batch = (self.assigned_partitions is not None)
         self.count_data()
 
     def store_parameter(self, h5dir,
@@ -142,6 +144,9 @@ class CachedNumericallyPreparedDataset(Dataset):
         self.nbinputs = len(self.feature2idx)
         self.nboutputs = len(self.label2idx)
 
+        # cached
+        self.current_fileid = -1
+
     def count_data(self):
         filepaths = glob(os.path.join(self.h5dir, '*.h5'))
         self.nbfiles = len(filepaths)
@@ -149,6 +154,18 @@ class CachedNumericallyPreparedDataset(Dataset):
         for filepath in filepaths:
             df = pd.read_hdf(filepath)
             self.nbdata += len(df)
+
+    def wrangle_batch(self):
+        if not self.reshuffle_batch:
+            self.dataidx = np.arange(len(self.assigned_partitions))
+            self.nbbatches = self.nbfiles
+        else:
+            self.dataidx = [partition
+                            for partition in self.assigned_partitions
+                            if partition in self.interested_partitions]
+            self.dataidx = np.array(self.dataidx)
+            self.nbbatches = math.ceil(len(self.dataidx) / self.batch_size)
+        self.data_fileids, self.data_filepos = self.calculate_fileid_pos(self.dataidx)
 
     def calculate_fileid_pos(self, idx):
         fileid = idx // self.batch_size
@@ -165,9 +182,26 @@ class CachedNumericallyPreparedDataset(Dataset):
         return Tensor(self.df.iloc[pos, :self.nbinputs]), Tensor(self.df.iloc[pos, -self.nboutputs:])
 
     def get_batch(self, batchid):
-        self.current_fileid = batchid
-        self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(batchid)))
-        return Tensor(np.array(self.df.iloc[:, :self.nbinputs])), Tensor(np.array(self.df.iloc[:, -self.nboutputs:]))
+        if not self.reshuffle_batch:
+            self.current_fileid = batchid
+            self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(batchid)))
+            return Tensor(np.array(self.df.iloc[:, :self.nbinputs])), Tensor(np.array(self.df.iloc[:, -self.nboutputs:]))
+        else:
+            fileids = self.data_fileids[batchid*self.batch_size:(batchid+1)*self.batch_size]
+            filepos = self.data_filepos[batchid*self.batch_size:(batchid+1)*self.batch_size]
+            unique_fileids = set(fileids)
+            x_to_return = None
+            y_to_return = None
+            for fileid in unique_fileids:
+                if fileid != self.current_fileid:
+                    self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(batchid)))
+                    self.current_fileid = fileid
+                pos = filepos[ fileids == fileid]
+                newx = np.array(self.df.iloc[pos, :self.nbinputs])
+                newy = np.array(self.df.iloc[pos, -self.nboutputs:])
+                x_to_return = newx if x_to_return is None else np.append(x_to_return, newx, axis=0)
+                y_to_return = newy if y_to_return is None else np.append(y_to_return, newy, axis=0)
+            return Tensor(x_to_return), Tensor(y_to_return)
 
 
 class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset):
@@ -192,6 +226,7 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  assigned_partitions, interested_partitions,
                  filename_fmt,
                  device)
+        self.reshuffle_batch = False
         self.datadir = datadir
         self.prepare_h5_files(h5dir)
 
@@ -226,9 +261,6 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
             self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
         self.nbdata = nbdata
         self.nbfiles = fileid + 1
-
-        # cached
-        self.current_fileid = -1
 
 
     def write_data_h5(self, batch_data, xcolumns, ycolumns, filename):
