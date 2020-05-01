@@ -9,7 +9,7 @@ import torch
 from torch import Tensor
 from torch.utils.data import Dataset
 
-from ..utils.core import generate_columndict, convert_data_to_matrix
+from .core import generate_columndict, convert_data_to_matrix
 from ..data.dataload import iterate_json_files_directory
 from ..data.adding_features import adding_no_features
 
@@ -150,19 +150,23 @@ class CachedNumericallyPreparedDataset(Dataset):
             df = pd.read_hdf(filepath)
             self.nbdata += len(df)
 
+    def calculate_fileid_pos(self, idx):
+        fileid = idx // self.batch_size
+        pos = idx % self.batch_size
+        return fileid, pos
+
     def __len__(self):
         return self.nbdata
 
     def __getitem__(self, idx):
-        fileid = idx // self.batch_size
-        pos = idx % self.batch_size
+        fileid, pos = self.calculate_fileid_pos(idx)
         if self.current_fileid != fileid:
             self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(fileid)))
         return Tensor(self.df.iloc[pos, :self.nbinputs]), Tensor(self.df.iloc[pos, -self.nboutputs:])
 
-    def get_batch(self, fileid):
-        self.current_fileid = fileid
-        self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(fileid)))
+    def get_batch(self, batchid):
+        self.current_fileid = batchid
+        self.df = pd.read_hdf(os.path.join(self.h5dir, self.filename_fmt.format(batchid)))
         return Tensor(np.array(self.df.iloc[:, :self.nbinputs])), Tensor(np.array(self.df.iloc[:, -self.nboutputs:]))
 
 
