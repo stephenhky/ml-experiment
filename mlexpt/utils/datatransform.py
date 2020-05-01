@@ -115,7 +115,7 @@ class CachedNumericallyPreparedDataset(Dataset):
                  filename_fmt,
                  device)
         self.reshuffle_batch = (self.assigned_partitions is not None)
-        self.count_data()
+        self.wrangle_batch()
 
     def store_parameter(self, h5dir,
                  batch_size,
@@ -145,15 +145,8 @@ class CachedNumericallyPreparedDataset(Dataset):
         self.nboutputs = len(self.label2idx)
 
         # cached
+        self.nbfiles = len(glob(os.path.join(self.h5dir, '*.h5')))
         self.current_fileid = -1
-
-    def count_data(self):
-        filepaths = glob(os.path.join(self.h5dir, '*.h5'))
-        self.nbfiles = len(filepaths)
-        self.nbdata = 0
-        for filepath in filepaths:
-            df = pd.read_hdf(filepath)
-            self.nbdata += len(df)
 
     def wrangle_batch(self):
         if not self.reshuffle_batch:
@@ -173,7 +166,7 @@ class CachedNumericallyPreparedDataset(Dataset):
         return fileid, pos
 
     def __len__(self):
-        return self.nbdata
+        return len(self.dataidx)
 
     def __getitem__(self, idx):
         fileid, pos = self.calculate_fileid_pos(idx)
