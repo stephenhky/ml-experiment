@@ -49,7 +49,7 @@ def convert_data_to_matrix_with_embeddings(data,
     return X, Y
 
 
-class CachedNumericallyPreparedDataset(Dataset):
+class NumericallyPreparedDataset(Dataset):
     def __init__(self,
                  data_iterator,
                  feature2idx,
@@ -58,7 +58,7 @@ class CachedNumericallyPreparedDataset(Dataset):
                  labelcol, label2idx,
                  assigned_partitions=None, interested_partitions=[],
                  device='cpu'):
-        super(CachedNumericallyPreparedDataset, self).__init__()
+        super(NumericallyPreparedDataset, self).__init__()
         self.feature2idx = feature2idx
         self.qual_features = qual_features
         self.binary_features = binary_features
@@ -92,7 +92,7 @@ class CachedNumericallyPreparedDataset(Dataset):
         return x, y
 
 
-class PreparingCachedNumericallyPreparedDataset(Dataset):
+class CachedNumericallyPreparedDataset(Dataset):
     def __init__(self,
                  h5dir,
                  batch_size,
@@ -103,7 +103,7 @@ class PreparingCachedNumericallyPreparedDataset(Dataset):
                  assigned_partitions=None, interested_partitions=[],
                  filename_fmt='data_{0:09d}.h5',
                  device='cpu'):
-        super(PreparingCachedNumericallyPreparedDataset, self).__init__()
+        super(CachedNumericallyPreparedDataset, self).__init__()
         self.store_parameter(h5dir,
                  batch_size,
                  feature2idx,
@@ -166,7 +166,7 @@ class PreparingCachedNumericallyPreparedDataset(Dataset):
         return Tensor(np.array(self.df.iloc[:, :self.nbinputs])), Tensor(np.array(self.df.iloc[:, -self.nboutputs:]))
 
 
-class PreparingCachedNumericallyPreparedDataset(PreparingCachedNumericallyPreparedDataset):
+class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset):
     def __init__(self,
                  datadir,   # JSON format
                  batch_size,
@@ -178,7 +178,7 @@ class PreparingCachedNumericallyPreparedDataset(PreparingCachedNumericallyPrepar
                  h5dir=None,
                  filename_fmt='data_{0:09d}.h5',
                  device='cpu'):
-        Dataset.__init__()
+        Dataset.__init__(self)
         self.store_parameter(h5dir,
                  batch_size,
                  feature2idx,
