@@ -254,8 +254,8 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
             self.write_data_h5(batch_data, idx2feature, idx2label,
                                self.filename_fmt.format(fileid))
         self.nbdata = nbdata
-        self.nbbatches = nbdata
         self.nbfiles = fileid + 1
+        self.nbbatches = self.nbfiles
 
     def write_data_h5(self, batch_data, xcolumns, ycolumns, filename):
         X, Y = convert_data_to_matrix_with_embeddings(batch_data,
