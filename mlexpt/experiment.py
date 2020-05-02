@@ -12,7 +12,8 @@ from .metrics.statistics import extracting_stats_run, compute_average_overall_pe
 from .ml.models import classifiers_dict
 from .utils.core import generate_columndict
 from .utils.embeddings import embed_features_cacheddataset
-from .utils.datatransform import generate_columndict_withembeddings, PreparingCachedNumericallyPreparedDataset
+from .utils.datatransform import generate_columndict_withembeddings, \
+    PreparingCachedNumericallyPreparedDataset, CachedNumericallyPreparedDataset
 from .modelrunio import persist_model_files
 
 
@@ -98,6 +99,14 @@ def run_experiment(config,
                                                                   dimred_dict)
     columndict_generation_endtime = time()
 
+    # making numerical transform
+    alldataset = CachedNumericallyPreparedDataset(h5dir,
+                                                  batch_size, feature2idx,
+                                                  qual_features, binary_features, quant_features,
+                                                  dimred_dict, labelcol, label2idx,
+                                                  device=data_device)
+    alldataset_h5transform_endtime = time()
+
     # update model parameters
     if algorithm == 'ModifiedNaiveBayes':
         model_param['qual_features'] = qual_features
@@ -118,21 +127,31 @@ def run_experiment(config,
         for cv_round in range(cv_nfold):
             # train
             print('Round {}'.format(cv_round))
-            train_dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
-                                                                      batch_size,
-                                                                      feature2idx,
-                                                                      qual_features,
-                                                                      binary_features,
-                                                                      quant_features,
-                                                                      dimred_dict,
-                                                                      labelcol,
-                                                                      label2idx,
-                                                                      assigned_partitions=partitions,
-                                                                      interested_partitions=[partition
+            # train_dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
+            #                                                           batch_size,
+            #                                                           feature2idx,
+            #                                                           qual_features,
+            #                                                           binary_features,
+            #                                                           quant_features,
+            #                                                           dimred_dict,
+            #                                                           labelcol,
+            #                                                           label2idx,
+            #                                                           assigned_partitions=partitions,
+            #                                                           interested_partitions=[partition
+            #                                                                         for partition in range(cv_nfold)
+            #                                                                         if partition != cv_round],
+            #                                                           device=data_device,
+            #                                                           )
+            train_dataset = CachedNumericallyPreparedDataset(h5dir,
+                                                             batch_size,
+                                                             feature2idx,
+                                                             qual_features, binary_features, quant_features,
+                                                             dimred_dict, labelcol, label2idx,
+                                                             assigned_partitions=partitions,
+                                                             interested_partitions=[partitions
                                                                                     for partition in range(cv_nfold)
                                                                                     if partition != cv_round],
-                                                                      device=data_device,
-                                                                      )
+                                                             device=data_device)
 
             if model_class is None:
                 model = classifiers_dict[algorithm](**model_param)
@@ -141,20 +160,27 @@ def run_experiment(config,
             model.fit_batch(train_dataset)
 
             # test
-            test_dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
-                                                                     batch_size,
-                                                                     feature2idx,
-                                                                     qual_features,
-                                                                     binary_features,
-                                                                     quant_features,
-                                                                     dimred_dict,
-                                                                     labelcol,
-                                                                     label2idx,
-                                                                     assigned_partitions=partitions,
-                                                                     interested_partitions=[cv_round],
-                                                                     device=data_device
-                                                                     )
-            nbtestdata = len(test_dataset)
+            # test_dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
+            #                                                          batch_size,
+            #                                                          feature2idx,
+            #                                                          qual_features,
+            #                                                          binary_features,
+            #                                                          quant_features,
+            #                                                          dimred_dict,
+            #                                                          labelcol,
+            #                                                          label2idx,
+            #                                                          assigned_partitions=partitions,
+            #                                                          interested_partitions=[cv_round],
+            #                                                          device=data_device
+            #                                                          )
+            test_dataset = CachedNumericallyPreparedDataset(h5dir,
+                                                            batch_size,
+                                                            feature2idx,
+                                                            qual_features, binary_features, quant_features,
+                                                            dimred_dict, labelcol, label2idx,
+                                                            assigned_partitions=partitions,
+                                                            interested_partitions=[cv_round],
+                                                            device=data_device)
             predicted_Y = model.predict_proba_batch(test_dataset)
             test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
             test_Y = None
@@ -239,14 +265,15 @@ def run_experiment(config,
 
     finalmodel_training_endtime = time()
 
-    if do_cv:
-        # output statistics
-        print('Total time: {0:.1f} sec'.format(finalmodel_training_endtime-starttime))
-        print('\tData processing time: {0:.1f} sec'.format(data_processing_endtime-starttime))
-        print('\tColumn dictionary generation time: {0:.1f} sec'.format(columndict_generation_endtime-data_processing_endtime))
-        print('\tCross validation time: {0:.1f} sec'.format(cross_validation_endtime-columndict_generation_endtime))
-        print('\tFinal model training time: {0:.1f} sec'.format(finalmodel_training_endtime-cross_validation_endtime))
+    # output statistics
+    print('Total time: {0:.1f} sec'.format(finalmodel_training_endtime-starttime))
+    print('\tData processing time: {0:.1f} sec'.format(data_processing_endtime-starttime))
+    print('\tColumn dictionary generation time: {0:.1f} sec'.format(columndict_generation_endtime-data_processing_endtime))
+    print('\tNumerical transformation time: {0:.1f} sec'.format(alldataset_h5transform_endtime-columndict_generation_endtime))
+    print('\tCross validation time: {0:.1f} sec'.format(cross_validation_endtime-alldataset_h5transform_endtime))
+    print('\tFinal model training time: {0:.1f} sec'.format(finalmodel_training_endtime-cross_validation_endtime))
 
+    if do_cv:
         # print overall performances
         average_overall_performance = compute_average_overall_performance(overall_performances)
         print('Final Measurement')
