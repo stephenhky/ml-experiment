@@ -33,8 +33,8 @@ class ExperimentalEncoder(ABC):
 
     def fit_batch(self, dataset, *args, **kwargs):
         x_tofit = None
-        for fileid in range(dataset.nbfiles):
-            X, _ = dataset.get_batch(fileid)
+        for batchid in range(dataset.nbbatches):
+            X, _ = dataset.get_batch(batchid)
             x_tofit = np.array(X) if x_tofit is None else np.append(x_tofit, np.array(X), axis=0)
         self.fit(x_tofit, *args, **kwargs)
 
