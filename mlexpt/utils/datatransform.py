@@ -224,8 +224,6 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  device)
         self.reshuffle_batch = False
         self.datadir = datadir
-        print(h5dir)
-        print(self.h5dir)
         self.prepare_h5_files(h5dir)
 
     def prepare_h5_files(self, h5dir):
@@ -249,12 +247,14 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
             if nbdata % self.batch_size == 0:
                 self.write_data_h5(batch_data, idx2feature, idx2label,
                                    os.path.join(h5dir, self.filename_fmt.format(fileid)))
+                print(os.path.join(h5dir, self.filename_fmt.format(fileid)))
                 fileid += 1
                 batch_data = []
 
         if len(batch_data) > 0:
             self.write_data_h5(batch_data, idx2feature, idx2label,
                                os.path.join(h5dir, self.filename_fmt.format(fileid)))
+            print(os.path.join(h5dir, self.filename_fmt.format(fileid)))
         self.nbdata = nbdata
         self.nbfiles = fileid + 1
 
