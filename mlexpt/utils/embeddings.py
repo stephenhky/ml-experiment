@@ -73,6 +73,7 @@ def embed_features_cacheddataset(dr_config, datadir, batch_size=10000):
                                                             dimred_dict,
                                                             None,
                                                             {})
+        print(glob(dataset.h5dir+'/*.h5'))
         transformer.fit_batch(dataset)
         dimred_dict[feature] = {'transformer': transformer,
                                 'dictionary': featureval2idx,
