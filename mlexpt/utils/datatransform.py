@@ -224,9 +224,9 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  device)
         self.reshuffle_batch = False
         self.datadir = datadir
-        self.prepare_h5_files(h5dir)
+        self.prepare_h5_files()
 
-    def prepare_h5_files(self, h5dir):
+    def prepare_h5_files(self):
         # writing to h5 files
         nbdata = 0
         fileid = 0
@@ -246,15 +246,13 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
             nbdata += 1
             if nbdata % self.batch_size == 0:
                 self.write_data_h5(batch_data, idx2feature, idx2label,
-                                   os.path.join(h5dir, self.filename_fmt.format(fileid)))
-                print(os.path.join(h5dir, self.filename_fmt.format(fileid)))
+                                   self.filename_fmt.format(fileid))
                 fileid += 1
                 batch_data = []
 
         if len(batch_data) > 0:
             self.write_data_h5(batch_data, idx2feature, idx2label,
-                               os.path.join(h5dir, self.filename_fmt.format(fileid)))
-            print(os.path.join(h5dir, self.filename_fmt.format(fileid)))
+                               self.filename_fmt.format(fileid))
         self.nbdata = nbdata
         self.nbfiles = fileid + 1
 
@@ -271,4 +269,5 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
         for i in range(Y.shape[1]):
             df[ycolumns[i]] = Y.toarray()[:, i]
         df.to_hdf(os.path.join(self.h5dir, filename), key=os.path.basename(filename)[:-3])
+        print(os.path.join(self.h5dir, filename))
 
