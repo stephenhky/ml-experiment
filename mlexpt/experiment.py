@@ -157,7 +157,7 @@ def run_experiment(config,
                                                              qual_features, binary_features, quant_features,
                                                              dimred_dict, labelcol, label2idx,
                                                              assigned_partitions=partitions,
-                                                             interested_partitions=[partitions
+                                                             interested_partitions=[partition
                                                                                     for partition in range(cv_nfold)
                                                                                     if partition != cv_round],
                                                              device=data_device)
