@@ -271,4 +271,5 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
             df[ycolumns[i]] = Y.toarray()[:, i]
         df.to_hdf(os.path.join(self.h5dir, filename), key=os.path.basename(filename)[:-3])
         print(os.path.join(self.h5dir, filename))
+        print(glob(os.path.join(self.h5dir, filename)))
 
