@@ -153,9 +153,9 @@ class CachedNumericallyPreparedDataset(Dataset):
             self.dataidx = np.arange(len(self.assigned_partitions))
             self.nbbatches = self.nbfiles
         else:
-            self.dataidx = [partition
-                            for partition in self.assigned_partitions
-                            if partition in self.interested_partitions]
+            self.dataidx = [self.assigned_partitions[i]
+                            for i in range(len(self.assigned_partitions))
+                            if self.assigned_partitions[i] in self.interested_partitions]
             self.dataidx = np.array(self.dataidx)
             self.nbbatches = math.ceil(len(self.dataidx) / self.batch_size)
         self.data_fileids, self.data_filepos = self.calculate_fileid_pos(self.dataidx)

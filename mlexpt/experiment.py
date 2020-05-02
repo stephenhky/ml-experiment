@@ -108,6 +108,7 @@ def run_experiment(config,
     if h5dir is None:
         h5dirobj = tempfile.TemporaryDirectory()
         h5dir = h5dirobj.name
+    print('Numerically transformed files stored in: {}'.format(h5dir))
     alldataset = CachedNumericallyPreparedDataset(h5dir,
                                                   batch_size, feature2idx,
                                                   qual_features, binary_features, quant_features,
