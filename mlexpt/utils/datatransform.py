@@ -225,6 +225,7 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
         self.reshuffle_batch = False
         self.datadir = datadir
         self.prepare_h5_files()
+        print(glob(self.h5dir+'/*.h5'))
 
     def prepare_h5_files(self):
         # writing to h5 files
@@ -270,5 +271,4 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
         for i in range(Y.shape[1]):
             df[ycolumns[i]] = Y.toarray()[:, i]
         df.to_hdf(os.path.join(self.h5dir, filename), key=os.path.basename(filename)[:-3])
-        print(glob(os.path.join(self.h5dir, '*.h5')))
 
