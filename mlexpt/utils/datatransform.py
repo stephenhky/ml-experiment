@@ -224,6 +224,8 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  device)
         self.reshuffle_batch = False
         self.datadir = datadir
+        print(h5dir)
+        print(self.h5dir)
         self.prepare_h5_files(h5dir)
 
     def prepare_h5_files(self, h5dir):
