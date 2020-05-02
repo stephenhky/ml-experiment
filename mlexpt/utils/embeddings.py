@@ -1,6 +1,6 @@
 
 import pickle
-from glob import glob
+import tempfile
 from warnings import warn
 
 from .core import generate_columndict, convert_data_to_matrix
@@ -64,6 +64,7 @@ def embed_features_cacheddataset(dr_config, datadir, batch_size=10000):
             warn('Encoder {} is not configured.'.format(dr_config[feature]['algorithm']))
             continue
 
+        h5datatempdir = tempfile.TemporaryDirectory()
         dataset = PreparingCachedNumericallyPreparedDataset(datadir,
                                                             batch_size,
                                                             featureval2idx,
@@ -71,7 +72,7 @@ def embed_features_cacheddataset(dr_config, datadir, batch_size=10000):
                                                             [],
                                                             [],
                                                             dimred_dict,
-                                                            None,
+                                                            h5datatempdir.name,
                                                             {})
         # TODO: figure out why temporary files dissappear at this point
         transformer.fit_batch(dataset)
