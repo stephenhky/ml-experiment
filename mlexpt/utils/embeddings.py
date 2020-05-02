@@ -72,8 +72,9 @@ def embed_features_cacheddataset(dr_config, datadir, batch_size=10000):
                                                             [],
                                                             [],
                                                             dimred_dict,
-                                                            h5datatempdir.name,
-                                                            {})
+                                                            None,
+                                                            {},
+                                                            h5dir=h5datatempdir.name)
         # TODO: figure out why temporary files dissappear at this point
         transformer.fit_batch(dataset)
         dimred_dict[feature] = {'transformer': transformer,
