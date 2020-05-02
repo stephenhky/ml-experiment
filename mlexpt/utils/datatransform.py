@@ -211,8 +211,8 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  device='cpu'):
         Dataset.__init__(self)
         if h5dir is None:
-            h5tempdir = tempfile.TemporaryDirectory()
-            h5dir = h5tempdir.name
+            self.h5tempdir = tempfile.TemporaryDirectory()    # storing the context so that it is not removed after exiting the constructor
+            h5dir = self.h5tempdir.name
         self.store_parameter(h5dir,
                  batch_size,
                  feature2idx,
@@ -225,7 +225,6 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
         self.reshuffle_batch = False
         self.datadir = datadir
         self.prepare_h5_files()
-        print(glob(self.h5dir+'/*.h5'))
 
     def prepare_h5_files(self):
         # writing to h5 files
