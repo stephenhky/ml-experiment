@@ -210,6 +210,9 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  filename_fmt='data_{0:09d}.h5',
                  device='cpu'):
         Dataset.__init__(self)
+        if h5dir is None:
+            h5tempdir = tempfile.TemporaryDirectory()
+            h5dir = h5tempdir.name
         self.store_parameter(h5dir,
                  batch_size,
                  feature2idx,
@@ -227,11 +230,7 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
         # writing to h5 files
         nbdata = 0
         fileid = 0
-        if h5dir is None:
-            self.h5tempdir = tempfile.TemporaryDirectory()
-            self.h5dir = self.h5tempdir.name
-        else:
-            self.h5dir = h5dir
+
         batch_data = []
         idx2feature = [None]*len(self.feature2idx)
         for col, i in self.feature2idx.items():
