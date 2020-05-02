@@ -1,5 +1,6 @@
 from functools import partial
 from time import time
+import tempfile
 
 import numpy as np
 import pandas as pd
@@ -100,6 +101,9 @@ def run_experiment(config,
     columndict_generation_endtime = time()
 
     # making numerical transform
+    if h5dir is None:
+        h5dirobj = tempfile.TemporaryDirectory()
+        h5dir = h5dirobj.name
     alldataset = CachedNumericallyPreparedDataset(h5dir,
                                                   batch_size, feature2idx,
                                                   qual_features, binary_features, quant_features,
