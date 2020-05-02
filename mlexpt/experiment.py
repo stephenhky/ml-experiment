@@ -105,7 +105,7 @@ def run_experiment(config,
     partitions = assign_partitions(nbdata, cv_nfold, heldout_fraction)
 
     # making numerical transform
-    if not os.path.exists(h5dir) or os.path.isdir(h5dir):
+    if not os.path.exists(h5dir) or not os.path.isdir(h5dir):
         os.makedirs(h5dir)
     print('Numerically transformed files stored in: {}'.format(h5dir))
     _ = PreparingCachedNumericallyPreparedDataset(datapath,
