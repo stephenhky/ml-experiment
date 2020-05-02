@@ -115,7 +115,7 @@ class CachedNumericallyPreparedDataset(Dataset):
                  filename_fmt,
                  device)
         self.reshuffle_batch = (self.assigned_partitions is not None)
-        self.count_data()
+        self.wrangle_batch()
 
     def store_parameter(self, h5dir,
                  batch_size,
@@ -145,24 +145,17 @@ class CachedNumericallyPreparedDataset(Dataset):
         self.nboutputs = len(self.label2idx)
 
         # cached
+        self.nbfiles = len(glob(os.path.join(self.h5dir, '*.h5')))
         self.current_fileid = -1
-
-    def count_data(self):
-        filepaths = glob(os.path.join(self.h5dir, '*.h5'))
-        self.nbfiles = len(filepaths)
-        self.nbdata = 0
-        for filepath in filepaths:
-            df = pd.read_hdf(filepath)
-            self.nbdata += len(df)
 
     def wrangle_batch(self):
         if not self.reshuffle_batch:
             self.dataidx = np.arange(len(self.assigned_partitions))
             self.nbbatches = self.nbfiles
         else:
-            self.dataidx = [partition
-                            for partition in self.assigned_partitions
-                            if partition in self.interested_partitions]
+            self.dataidx = [self.assigned_partitions[i]
+                            for i in range(len(self.assigned_partitions))
+                            if self.assigned_partitions[i] in self.interested_partitions]
             self.dataidx = np.array(self.dataidx)
             self.nbbatches = math.ceil(len(self.dataidx) / self.batch_size)
         self.data_fileids, self.data_filepos = self.calculate_fileid_pos(self.dataidx)
@@ -173,7 +166,7 @@ class CachedNumericallyPreparedDataset(Dataset):
         return fileid, pos
 
     def __len__(self):
-        return self.nbdata
+        return len(self.dataidx)
 
     def __getitem__(self, idx):
         fileid, pos = self.calculate_fileid_pos(idx)
@@ -217,6 +210,9 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  filename_fmt='data_{0:09d}.h5',
                  device='cpu'):
         Dataset.__init__(self)
+        if h5dir is None:
+            self.h5tempdir = tempfile.TemporaryDirectory()    # storing the context so that it is not removed after exiting the constructor
+            h5dir = self.h5tempdir.name
         self.store_parameter(h5dir,
                  batch_size,
                  feature2idx,
@@ -228,17 +224,13 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
                  device)
         self.reshuffle_batch = False
         self.datadir = datadir
-        self.prepare_h5_files(h5dir)
+        self.prepare_h5_files()
 
-    def prepare_h5_files(self, h5dir):
+    def prepare_h5_files(self):
         # writing to h5 files
         nbdata = 0
         fileid = 0
-        if h5dir is None:
-            self.h5tempdir = tempfile.TemporaryDirectory()
-            self.h5dir = self.h5tempdir.name
-        else:
-            self.h5dir = h5dir
+
         batch_data = []
         idx2feature = [None]*len(self.feature2idx)
         for col, i in self.feature2idx.items():
@@ -253,15 +245,17 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
             batch_data.append(datum)
             nbdata += 1
             if nbdata % self.batch_size == 0:
-                self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
+                self.write_data_h5(batch_data, idx2feature, idx2label,
+                                   self.filename_fmt.format(fileid))
                 fileid += 1
                 batch_data = []
 
         if len(batch_data) > 0:
-            self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
+            self.write_data_h5(batch_data, idx2feature, idx2label,
+                               self.filename_fmt.format(fileid))
         self.nbdata = nbdata
         self.nbfiles = fileid + 1
-
+        self.nbbatches = self.nbfiles
 
     def write_data_h5(self, batch_data, xcolumns, ycolumns, filename):
         X, Y = convert_data_to_matrix_with_embeddings(batch_data,
@@ -276,4 +270,7 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
         for i in range(Y.shape[1]):
             df[ycolumns[i]] = Y.toarray()[:, i]
         df.to_hdf(os.path.join(self.h5dir, filename), key=os.path.basename(filename)[:-3])
+
+    def __len__(self):
+        return self.nbdata
 
