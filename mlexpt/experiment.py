@@ -1,6 +1,6 @@
 from functools import partial
 from time import time
-import tempfile
+import os
 
 import numpy as np
 import pandas as pd
@@ -53,7 +53,7 @@ def run_experiment(config,
     datapath = config['data']['path']
     missing_val_default = config['data']['missing_value_filling']
     data_device = config['data']['torchdevice']
-    h5dir = config['data'].get('h5dir', None)
+    h5dir = config['data'].get('h5dir', './.h5')
     # statistics
     topN = config['statistics']['topN']
     to_compute_class_performances = config['statistics'].get('compute_class_performance', False)
@@ -105,9 +105,8 @@ def run_experiment(config,
     partitions = assign_partitions(nbdata, cv_nfold, heldout_fraction)
 
     # making numerical transform
-    if h5dir is None:
-        h5dirobj = tempfile.TemporaryDirectory()
-        h5dir = h5dirobj.name
+    if not os.path.exists(h5dir) or os.path.isdir(h5dir):
+        os.makedirs(h5dir)
     print('Numerically transformed files stored in: {}'.format(h5dir))
     alldataset = CachedNumericallyPreparedDataset(h5dir,
                                                   batch_size, feature2idx,
@@ -117,14 +116,6 @@ def run_experiment(config,
                                                   interested_partitions=list(set(partitions)),
                                                   device=data_device)
     alldataset_h5transform_endtime = time()
-
-    # update model parameters
-    if algorithm == 'ModifiedNaiveBayes':
-        model_param['qual_features'] = qual_features
-        model_param['binary_features'] = binary_features
-        model_param['quant_features'] = quant_features
-        model_param['feature2idx'] = feature2idx
-        model_param['dimred_dict'] = dimred_dict
 
     # cross-validation
     overall_performances = []
