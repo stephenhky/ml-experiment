@@ -270,4 +270,7 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
         for i in range(Y.shape[1]):
             df[ycolumns[i]] = Y.toarray()[:, i]
         df.to_hdf(os.path.join(self.h5dir, filename), key=os.path.basename(filename)[:-3])
-        print('wrote {}'.format(filename))
+
+    def __len__(self):
+        return self.nbdata
+
