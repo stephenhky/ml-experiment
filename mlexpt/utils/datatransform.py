@@ -245,15 +245,16 @@ class PreparingCachedNumericallyPreparedDataset(CachedNumericallyPreparedDataset
             batch_data.append(datum)
             nbdata += 1
             if nbdata % self.batch_size == 0:
-                self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
+                self.write_data_h5(batch_data, idx2feature, idx2label,
+                                   os.path.join(h5dir, self.filename_fmt.format(fileid)))
                 fileid += 1
                 batch_data = []
 
         if len(batch_data) > 0:
-            self.write_data_h5(batch_data, idx2feature, idx2label, self.filename_fmt.format(fileid))
+            self.write_data_h5(batch_data, idx2feature, idx2label,
+                               os.path.join(h5dir, self.filename_fmt.format(fileid)))
         self.nbdata = nbdata
         self.nbfiles = fileid + 1
-
 
     def write_data_h5(self, batch_data, xcolumns, ycolumns, filename):
         X, Y = convert_data_to_matrix_with_embeddings(batch_data,
