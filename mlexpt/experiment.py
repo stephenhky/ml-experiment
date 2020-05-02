@@ -108,7 +108,7 @@ def run_experiment(config,
     if not os.path.exists(h5dir) or not os.path.isdir(h5dir):
         os.makedirs(h5dir)
     print('Numerically transformed files stored in: {}'.format(h5dir))
-    _ = PreparingCachedNumericallyPreparedDataset(iterate_json_files_directory(tempdir.name),
+    _ = PreparingCachedNumericallyPreparedDataset(tempdir.name,
                                                   batch_size,
                                                   feature2idx,
                                                   qual_features, binary_features, quant_features,
