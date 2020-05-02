@@ -84,7 +84,7 @@ class MulticlassLogisticRegression(ExperimentalClassifier):
         optimizer = torch.optim.Adam(self.logregs.parameters(), lr=0.01)
 
         for _ in tqdm(range(self.nb_epoch)):
-            for fileid in range(numerically_batched_dataset.nbfiles):
+            for fileid in range(numerically_batched_dataset.nbbatches):
                 optimizer.zero_grad()
                 X, Y = numerically_batched_dataset.get_batch(fileid)
                 X = X.to(self.logregs.device)
