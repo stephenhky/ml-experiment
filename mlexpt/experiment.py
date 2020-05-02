@@ -45,7 +45,7 @@ def run_experiment(config,
     model_param = config['model']['model_parameters']
     ## cross validation setup
     do_cv = config['train']['cross_validation']
-    cv_nfold = config['train']['cv_nfold']
+    cv_nfold = config['train'].get('cv_nfold', 5)
     heldout_fraction = config['train']['heldout_fraction']
     to_persist_model = config['train']['persist_model']
     final_model_path = config['train']['model_path']
@@ -100,6 +100,10 @@ def run_experiment(config,
                                                                   dimred_dict)
     columndict_generation_endtime = time()
 
+    # partition assignment
+    # important: even if cross-validation will not be performed
+    partitions = assign_partitions(nbdata, cv_nfold, heldout_fraction)
+
     # making numerical transform
     if h5dir is None:
         h5dirobj = tempfile.TemporaryDirectory()
@@ -108,6 +112,8 @@ def run_experiment(config,
                                                   batch_size, feature2idx,
                                                   qual_features, binary_features, quant_features,
                                                   dimred_dict, labelcol, label2idx,
+                                                  assigned_partitions=partitions,
+                                                  interested_partitions=list(set(partitions)),
                                                   device=data_device)
     alldataset_h5transform_endtime = time()
 
@@ -124,7 +130,6 @@ def run_experiment(config,
     top_results_by_class = []
     weighted_results_by_class = []
     hit_results_by_class = []
-    partitions = assign_partitions(nbdata, cv_nfold, heldout_fraction)
     if do_cv:
         print('Cross Validation')
 
