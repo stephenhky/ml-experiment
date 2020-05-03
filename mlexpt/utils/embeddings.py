@@ -7,7 +7,7 @@ from .core import generate_columndict, convert_data_to_matrix
 from ..data.dataload import iterate_json_files_directory
 from ..ml.encoders.dictembedding import DictEmbedding
 from ..ml.models import encoders_dict
-from .datatransform import PreparingCachedNumericallyPreparedDataset
+from .caching import PreparingCachedNumericallyPreparedDataset
 
 
 def embed_features(dr_config, alldata):
@@ -75,7 +75,6 @@ def embed_features_cacheddataset(dr_config, datadir, batch_size=10000):
                                                             None,
                                                             {},
                                                             h5dir=h5datatempdir.name)
-        # TODO: figure out why temporary files dissappear at this point
         transformer.fit_batch(dataset)
         dimred_dict[feature] = {'transformer': transformer,
                                 'dictionary': featureval2idx,

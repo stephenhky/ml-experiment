@@ -13,8 +13,8 @@ from .metrics.statistics import extracting_stats_run, compute_average_overall_pe
 from .ml.models import classifiers_dict
 from .utils.core import generate_columndict
 from .utils.embeddings import embed_features_cacheddataset
-from .utils.datatransform import generate_columndict_withembeddings, \
-    PreparingCachedNumericallyPreparedDataset, CachedNumericallyPreparedDataset
+from .utils.datatransform import generate_columndict_withembeddings
+from .utils.caching import CachedNumericallyPreparedDataset, PreparingCachedNumericallyPreparedDataset
 from .modelrunio import persist_model_files
 
 
@@ -130,21 +130,6 @@ def run_experiment(config,
         for cv_round in range(cv_nfold):
             # train
             print('Round {}'.format(cv_round))
-            # train_dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
-            #                                                           batch_size,
-            #                                                           feature2idx,
-            #                                                           qual_features,
-            #                                                           binary_features,
-            #                                                           quant_features,
-            #                                                           dimred_dict,
-            #                                                           labelcol,
-            #                                                           label2idx,
-            #                                                           assigned_partitions=partitions,
-            #                                                           interested_partitions=[partition
-            #                                                                         for partition in range(cv_nfold)
-            #                                                                         if partition != cv_round],
-            #                                                           device=data_device,
-            #                                                           )
             train_dataset = CachedNumericallyPreparedDataset(h5dir,
                                                              batch_size,
                                                              feature2idx,
@@ -163,19 +148,6 @@ def run_experiment(config,
             model.fit_batch(train_dataset)
 
             # test
-            # test_dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
-            #                                                          batch_size,
-            #                                                          feature2idx,
-            #                                                          qual_features,
-            #                                                          binary_features,
-            #                                                          quant_features,
-            #                                                          dimred_dict,
-            #                                                          labelcol,
-            #                                                          label2idx,
-            #                                                          assigned_partitions=partitions,
-            #                                                          interested_partitions=[cv_round],
-            #                                                          device=data_device
-            #                                                          )
             test_dataset = CachedNumericallyPreparedDataset(h5dir,
                                                             batch_size,
                                                             feature2idx,
@@ -209,22 +181,6 @@ def run_experiment(config,
     # train a final model
     if to_persist_model:
         print('Training final model...')
-        # dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
-        #                                                     batch_size,
-        #                                                     feature2idx,
-        #                                                     qual_features,
-        #                                                     binary_features,
-        #                                                     quant_features,
-        #                                                     dimred_dict,
-        #                                                     labelcol,
-        #                                                     label2idx,
-        #                                                     assigned_partitions=partitions,
-        #                                                     interested_partitions=[partition
-        #                                                                   for partition in range(cv_nfold)
-        #                                                                   if partition >= 0],
-        #                                                     device=data_device,
-        #                                                     h5dir=h5dir
-        #                                                     )
         dataset = CachedNumericallyPreparedDataset(h5dir,
                                                    batch_size,
                                                    feature2idx,
@@ -244,19 +200,6 @@ def run_experiment(config,
         persist_model_files(final_model_path, model, dimred_dict, feature2idx, label2idx, config)
 
         print('Testing the final model...')
-        # heldout_dataset = PreparingCachedNumericallyPreparedDataset(tempdir.name,
-        #                                                             batch_size,
-        #                                                             feature2idx,
-        #                                                             qual_features,
-        #                                                             binary_features,
-        #                                                             quant_features,
-        #                                                             dimred_dict,
-        #                                                             labelcol,
-        #                                                             label2idx,
-        #                                                             assigned_partitions=partitions,
-        #                                                             interested_partitions=[-1],
-        #                                                             device=data_device
-        #                                                             )
         heldout_dataset = CachedNumericallyPreparedDataset(h5dir,
                                                            batch_size,
                                                            feature2idx,
