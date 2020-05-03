@@ -26,6 +26,8 @@ to save memory space;
 * Statistics: statistical measures of the performance of the models and
 their class labels are calculated;
 * Cross Validation: cross validation option is available.
+* Ready Adaptation to Production: data pipelines and algorithms can be adapted into
+production codes with little changes.
 
 There will be tutorials and documentations.
 
