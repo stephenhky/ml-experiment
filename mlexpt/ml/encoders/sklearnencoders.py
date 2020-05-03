@@ -53,8 +53,8 @@ class ExperimentalIncrementalPCA(IncrementalPCA, ExperimentalEncoder):
 
     def fit_batch(self, dataset, *args, **kwargs):
         print('Fitting IncrementalPCA...')
-        for fileid in tqdm(range(dataset.nbfiles)):
-            X, _ = dataset.get_batch(fileid)
+        for batchid in tqdm(range(dataset.nbbatches)):
+            X, _ = dataset.get_batch(batchid)
             X = np.array(X)
             IncrementalPCA.partial_fit(self, X, *args, **kwargs)
 
