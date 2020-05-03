@@ -17,7 +17,7 @@ def package_description():
 
 
 setup(name='ml-experiment',
-      version="0.0.3a02",
+      version="0.0.3",
       description="Machine Learning Experiment Framework",
       long_description=package_description(),
       long_description_content_type='text/markdown',
@@ -25,10 +25,13 @@ setup(name='ml-experiment',
           "Topic :: Scientific/Engineering :: Artificial Intelligence",
           "Topic :: Scientific/Engineering :: Mathematics",
           "Topic :: Software Development :: Libraries :: Python Modules",
+          "Topic :: Software Development :: Version Control :: Git",
           "Programming Language :: Python :: 3.6",
           "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",
           "License :: OSI Approved :: MIT License",
+          "Intended Audience :: Science/Research",
+          "Intended Audience :: Developers"
       ],
       keywords="machine learning",
       url="https://github.com/stephenhky/ml-experiment",
