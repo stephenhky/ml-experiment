@@ -22,6 +22,11 @@ NB_LINES_PER_TEMPFILE = 500
 BATCH_SIZE = 500
 
 def add_multiple_features(add_feature_functions):
+    """
+
+    :param add_feature_functions:
+    :return:
+    """
     def returned_function(datum, add_feature_functions):
         for function in add_feature_functions:
             function(datum)
@@ -35,6 +40,16 @@ def run_experiment(config,
                    data_filter=lambda datum: True,
                    model_class=None,
                    batch_size=BATCH_SIZE):
+    """
+
+    :param config:
+    :param feature_adder:
+    :param nb_lines_per_tempfile:
+    :param data_filter:
+    :param model_class:
+    :param batch_size:
+    :return:
+    """
     ## model config
     qual_features = config['model'].get('qualitative_features', [])
     binary_features = config['model'].get('binary_features', [])
