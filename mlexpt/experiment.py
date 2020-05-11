@@ -29,6 +29,69 @@ def add_multiple_features(add_feature_functions):
     return partial(returned_function, add_feature_functions=add_feature_functions)
 
 
+def do_cross_validation(cv_nfold, feature2idx,
+                        qual_features, binary_features, quant_features,
+                        dimred_dict, labelcol, label2idx,
+                        algorithm, model_param,
+                        partitions, topN,
+                        data_device, batch_size, h5dir, model_class):
+    target_label_dict = {key[len(labelcol) + 1:]: value for key, value in label2idx.items()}
+    print('Cross Validation')
+
+    overall_performances = []
+    top_results_by_class = []
+    weighted_results_by_class = []
+    hit_results_by_class = []
+    for cv_round in range(cv_nfold):
+        # train
+        print('Round {}'.format(cv_round))
+        train_dataset = CachedNumericallyPreparedDataset(h5dir,
+                                                         batch_size,
+                                                         feature2idx,
+                                                         qual_features, binary_features, quant_features,
+                                                         dimred_dict, labelcol, label2idx,
+                                                         assigned_partitions=partitions,
+                                                         interested_partitions=[partition
+                                                                                for partition in range(cv_nfold)
+                                                                                if partition != cv_round],
+                                                         device=data_device)
+
+        if model_class is None:
+            model = classifiers_dict[algorithm](**model_param)
+        else:
+            model = model_class(**model_param)
+        model.fit_batch(train_dataset)
+
+        # test
+        test_dataset = CachedNumericallyPreparedDataset(h5dir,
+                                                        batch_size,
+                                                        feature2idx,
+                                                        qual_features, binary_features, quant_features,
+                                                        dimred_dict, labelcol, label2idx,
+                                                        assigned_partitions=partitions,
+                                                        interested_partitions=[cv_round],
+                                                        device=data_device)
+        predicted_Y = model.predict_proba_batch(test_dataset)
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
+        test_Y = None
+        for data in test_dataloader:
+            _, test_y = data
+            if test_Y is None:
+                test_Y = np.array(test_y)
+            else:
+                test_Y = np.append(test_Y, np.array(test_y), axis=0)
+
+        # statistics
+        overall_performance, top_result_by_class, weighted_result_by_class, hit_result_by_class = \
+            extracting_stats_run(predicted_Y, test_Y, target_label_dict, topN)
+        overall_performances.append(overall_performance)
+        top_results_by_class.append(top_result_by_class)
+        weighted_results_by_class.append(weighted_result_by_class)
+        hit_results_by_class.append(hit_result_by_class)
+
+        print(overall_performance)
+
+
 def run_experiment(config,
                    feature_adder=adding_no_features,
                    nb_lines_per_tempfile=NB_LINES_PER_TEMPFILE,
