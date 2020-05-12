@@ -77,7 +77,8 @@ def run_experiment(config,
                    nb_lines_per_tempfile=NB_LINES_PER_TEMPFILE,
                    data_filter=lambda datum: True,
                    model_class=None,
-                   batch_size=BATCH_SIZE):
+                   batch_size=BATCH_SIZE,
+                   overriding_h5dir=None):
     ## model config
     qual_features = config['model'].get('qualitative_features', [])
     binary_features = config['model'].get('binary_features', [])
@@ -96,7 +97,7 @@ def run_experiment(config,
     datapath = config['data']['path']
     missing_val_default = config['data']['missing_value_filling']
     data_device = config['data']['torchdevice']
-    h5dir = config['data'].get('h5dir', './.h5')
+    h5dir = config['data'].get('h5dir', './.h5') if overriding_h5dir is None else overriding_h5dir
     # statistics
     topN = config['statistics']['topN']
     to_compute_class_performances = config['statistics'].get('compute_class_performance', False)
