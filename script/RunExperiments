@@ -4,6 +4,8 @@ import argparse
 
 argparser = argparse.ArgumentParser(description='ML Experiment Framework')
 argparser.add_argument('configfile', help='Configuration file')
+argparser.add_argument('--overridingh5dir', default=None, type=str,
+                       help='Overriding directory for intermediate numerical HDF files.')
 args = argparser.parse_args()
 
 import os
@@ -34,4 +36,6 @@ if __name__ == '__main__':
     # defining feature addition (can be configured)
     feature_adder = add_multiple_features([adding_no_features,
                                            partial(convert_label_to_str, label=label)])
-    run_experiment(config, feature_adder=feature_adder)
+    run_experiment(config,
+                   feature_adder=feature_adder,
+                   overriding_h5dir=args.overridingh5dir)
