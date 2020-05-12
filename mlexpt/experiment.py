@@ -19,6 +19,11 @@ NB_LINES_PER_TEMPFILE = 500
 BATCH_SIZE = 500
 
 def add_multiple_features(add_feature_functions):
+    """
+
+    :param add_feature_functions:
+    :return:
+    """
     def returned_function(datum, add_feature_functions):
         for function in add_feature_functions:
             function(datum)
@@ -32,6 +37,25 @@ def do_cross_validation(cv_nfold, feature2idx,
                         model_class, model_param,
                         partitions, topN,
                         data_device, batch_size, h5dir):
+    """
+
+    :param cv_nfold:
+    :param feature2idx:
+    :param qual_features:
+    :param binary_features:
+    :param quant_features:
+    :param dimred_dict:
+    :param labelcol:
+    :param label2idx:
+    :param model_class:
+    :param model_param:
+    :param partitions:
+    :param topN:
+    :param data_device:
+    :param batch_size:
+    :param h5dir:
+    :return:
+    """
     target_label_dict = {key[len(labelcol) + 1:]: value for key, value in label2idx.items()}
     print('Cross Validation')
 
@@ -79,6 +103,17 @@ def run_experiment(config,
                    model_class=None,
                    batch_size=BATCH_SIZE,
                    overriding_h5dir=None):
+    """
+
+    :param config:
+    :param feature_adder:
+    :param nb_lines_per_tempfile:
+    :param data_filter:
+    :param model_class:
+    :param batch_size:
+    :param overriding_h5dir:
+    :return:
+    """
     ## model config
     qual_features = config['model'].get('qualitative_features', [])
     binary_features = config['model'].get('binary_features', [])
