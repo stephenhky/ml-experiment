@@ -4,8 +4,12 @@ import os
 from warnings import warn
 
 import joblib
+import numpy as np
+from torch.utils.data import DataLoader
+
 from .data.adding_features import adding_no_features
 from .ml.models import classifiers_dict
+from .utils.caching import CachedNumericallyPreparedDataset
 from .utils.datatransform import convert_data_to_matrix_with_embeddings
 
 
@@ -65,6 +69,63 @@ def model_predict_proba(model, qual_features, binary_features, quant_features,
                                                   dimred_dict, None, {})
     pred_Y = model.predict_proba(X.toarray())
     return pred_Y
+
+
+def model_predict_on_cached_dataset(
+        model, h5dir, batch_size,
+        feature2idx, qual_features, binary_features, quant_features,
+        dimred_dict, labelcol, label2idx,
+        assigned_partitions, interested_partitions,
+        device='cpu'):
+    test_dataset = CachedNumericallyPreparedDataset(h5dir,
+                                                    batch_size,
+                                                    feature2idx,
+                                                    qual_features, binary_features, quant_features,
+                                                    dimred_dict, labelcol, label2idx,
+                                                    assigned_partitions=assigned_partitions,
+                                                    interested_partitions=interested_partitions,
+                                                    device=device)
+    # X, _ = convert_data_to_matrix_with_embeddings(test_dataset, feature2idx,
+    #                                               qual_features, binary_features, quant_features,
+    #                                               dimred_dict, None, {})
+    # predicted_Y = model.predict_proba(X)
+    # predicted_Y = model.predict_proba_batch(test_dataset)
+    if len(test_dataset) > 0:
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
+        predicted_Y = None
+        test_Y = None
+        for data in test_dataloader:
+            x, test_y = data
+            new_pred_y = model.predict_proba(x)
+            if predicted_Y is None:
+                predicted_Y = new_pred_y
+            else:
+                predicted_Y = np.append(predicted_Y, new_pred_y, axis=0)
+            if test_Y is None:
+                test_Y = np.array(test_y)
+            else:
+                test_Y = np.append(test_Y, np.array(test_y), axis=0)
+        return predicted_Y, test_Y
+    else:
+        return np.array([]), np.array([])
+
+
+def train_model(h5dir, batch_size, feature2idx,
+                qual_features, binary_features, quant_features,
+                dimred_dict, labelcol, label2idx,
+                assigned_partitions, interested_partitions,
+                model_class, model_param, device='cpu'):
+    train_dataset = CachedNumericallyPreparedDataset(h5dir,
+                                                     batch_size,
+                                                     feature2idx,
+                                                     qual_features, binary_features, quant_features,
+                                                     dimred_dict, labelcol, label2idx,
+                                                     assigned_partitions=assigned_partitions,
+                                                     interested_partitions=interested_partitions,
+                                                     device=device)
+    model = model_class(**model_param)
+    model.fit_batch(train_dataset)
+    return model
 
 
 class CompactExperimentalModel:
