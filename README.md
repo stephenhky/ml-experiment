@@ -34,6 +34,7 @@ There will be tutorials and documentations.
 
 ## News
 
-* 05/03/2020: '0.0.3' released.
-* 04/29/2020: '0.0.2' released.
-* 04/24/2020: '0.0.1' released.
+* 05/12/2020: `0.0.4` released
+* 05/03/2020: `0.0.3` released.
+* 04/29/2020: `0.0.2` released.
+* 04/24/2020: `0.0.1` released.
