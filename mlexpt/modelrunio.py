@@ -85,11 +85,6 @@ def model_predict_on_cached_dataset(
                                                     assigned_partitions=assigned_partitions,
                                                     interested_partitions=interested_partitions,
                                                     device=device)
-    # X, _ = convert_data_to_matrix_with_embeddings(test_dataset, feature2idx,
-    #                                               qual_features, binary_features, quant_features,
-    #                                               dimred_dict, None, {})
-    # predicted_Y = model.predict_proba(X)
-    # predicted_Y = model.predict_proba_batch(test_dataset)
     if len(test_dataset) > 0:
         test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
         predicted_Y = None
