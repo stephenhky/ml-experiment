@@ -129,6 +129,8 @@ def do_cross_validation(cv_nfold, feature2idx,
 
         print(overall_performance)
 
+    return overall_performances, top_results_by_class, weighted_results_by_class, hit_results_by_class
+
 
 def run_experiment(config,
                    feature_adder=adding_no_features,
@@ -228,12 +230,15 @@ def run_experiment(config,
     if do_cv:
         print('Cross Validation')
 
-        do_cross_validation(cv_nfold, feature2idx,
-                            qual_features, binary_features, quant_features,
-                            dimred_dict, labelcol, label2idx,
-                            model_class, model_param,
-                            partitions, topN,
-                            data_device, batch_size, h5dir)
+        overall_performances, top_results_by_class, \
+            weighted_results_by_class, hit_results_by_class = do_cross_validation(
+                cv_nfold, feature2idx,
+                qual_features, binary_features, quant_features,
+                dimred_dict, labelcol, label2idx,
+                model_class, model_param,
+                partitions, topN,
+                data_device, batch_size, h5dir
+        )
 
     cross_validation_endtime = time()
 
