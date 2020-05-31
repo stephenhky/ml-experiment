@@ -17,7 +17,7 @@ def package_description():
 
 
 setup(name='ml-experiment',
-      version="0.0.5a03",
+      version="0.0.5a05",
       description="Machine Learning Experiment Framework",
       long_description=package_description(),
       long_description_content_type='text/markdown',
