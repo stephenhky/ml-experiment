@@ -69,7 +69,7 @@ def convert_data_to_matrix(data, feature2idx, qual_features, binary_features, qu
             X[rowidx, colidx] = float(datum[binary_feature])
         for quant_feature in quant_features:
             colidx = feature2idx[quant_feature]
-            X[rowidx, colidx] = convert_listnum_ndarray(datum[quant_feature])
+            X[rowidx, colidx] = np.array(datum[quant_feature])
 
         if labelcol is not None and label2idx is not None:
             target_labels = datum[labelcol]
