@@ -1,7 +1,15 @@
 
 from collections import defaultdict
 
+import numpy as np
 from scipy.sparse import dok_matrix
+
+
+def convert_listnum_ndarray(seq):
+    if isinstance(seq[0], list):
+        return np.array([convert_listnum_ndarray(item) for item in seq])
+    else:
+        return np.array(seq)
 
 
 def iterate_categorical_values(datum, feature):
@@ -61,7 +69,7 @@ def convert_data_to_matrix(data, feature2idx, qual_features, binary_features, qu
             X[rowidx, colidx] = float(datum[binary_feature])
         for quant_feature in quant_features:
             colidx = feature2idx[quant_feature]
-            X[rowidx, colidx] = datum[quant_feature]
+            X[rowidx, colidx] = np.array(datum[quant_feature])
 
         if labelcol is not None and label2idx is not None:
             target_labels = datum[labelcol]
