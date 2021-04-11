@@ -1,6 +1,6 @@
 # Package `ml-experiment`
 
-[![Build Status](https://travis-ci.org/stephenhky/ml-experiment.svg?branch=master)](https://travis-ci.org/stephenhky/ml-experiment)
+[![CircleCI](https://circleci.com/gh/stephenhky/ml-experiment.svg?style=svg)](https://circleci.com/gh/stephenhky/ml-experiment.svg)
 [![GitHub release](https://img.shields.io/github/release/stephenhky/ml-experiment.svg?maxAge=3600)](https://github.com/stephenhky/ml-experiment/releases)
 [![Documentation Status](https://readthedocs.org/projects/ml-experiment/badge/?version=latest)](https://ml-experiment.readthedocs.io/en/latest/?badge=latest)
 [![Updates](https://pyup.io/repos/github/stephenhky/ml-experiment/shield.svg)](https://pyup.io/repos/github/stephenhky/ml-experiment/)
@@ -34,6 +34,7 @@ There will be tutorials and documentations.
 
 ## News
 
+* 04/11/2021: `0.0.7` released.
 * 06/24/2020: `0.0.6` released.
 * 05/31/2020: `0.0.5` released.
 * 05/12/2020: `0.0.4` released.
