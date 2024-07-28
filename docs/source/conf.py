@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ml-experiment'
-copyright = '2020, Kwan-Yuet Ho'
+copyright = '2020, Kwan Yuet Stephen Ho'
 author = 'Kwan-Yuet Ho'
 
 # The version info for the project you're documenting, acts as replacement for
