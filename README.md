@@ -34,6 +34,7 @@ There will be tutorials and documentations.
 
 ## News
 
+* 07/28/2024: `0.0.8` released.
 * 04/11/2021: `0.0.7` released.
 * 06/24/2020: `0.0.6` released.
 * 05/31/2020: `0.0.5` released.
