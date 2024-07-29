@@ -17,7 +17,7 @@ def package_description():
 
 
 setup(name='ml-experiment',
-      version="0.0.7",
+      version="0.0.8a1",
       description="Machine Learning Experiment Framework",
       long_description=package_description(),
       long_description_content_type='text/markdown',
@@ -36,7 +36,7 @@ setup(name='ml-experiment',
       ],
       keywords="machine learning",
       url="https://github.com/stephenhky/ml-experiment",
-      author="Kwan-Yuet Ho",
+      author="Kwan Yuet Stephen Ho",
       author_email="stephenhky@yahoo.com.hk",
       license='MIT',
       packages=['mlexpt',
@@ -47,8 +47,8 @@ setup(name='ml-experiment',
                 'mlexpt.ml.classifiers',
                 'mlexpt.ml.encoders'],
       install_requires=install_requirements(),
-      tests_require=[
-          'unittest2',
+      test_require=[
+          'unittest',
       ],
       scripts=['script/CSV2JSON',
                'script/RunExperiments'],
