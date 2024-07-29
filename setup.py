@@ -47,8 +47,8 @@ setup(name='ml-experiment',
                 'mlexpt.ml.classifiers',
                 'mlexpt.ml.encoders'],
       install_requires=install_requirements(),
-      tests_require=[
-          'unittest2',
+      test_require=[
+          'unittest',
       ],
       scripts=['script/CSV2JSON',
                'script/RunExperiments'],
