@@ -15,3 +15,8 @@ class TestConversion(unittest.TestCase):
         np.testing.assert_array_equal(convert_listnum_ndarray(list2),
                                       np.array([[3., 4., 5.], [-1., -2., 5.]]))
 
+
+
+if __name__ == '__main__':
+    unittest.main()
+
