@@ -54,7 +54,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'ml-experiment'
 copyright = '2020, Kwan Yuet Stephen Ho'
-author = 'Kwan-Yuet Ho'
+author = 'Kwan Yuet Stephen Ho'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
