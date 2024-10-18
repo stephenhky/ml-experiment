@@ -49,3 +49,7 @@ zip-safe = false
 
 [project.optional-dependencies]
 test = ["unittest"]
+
+[project.scripts]
+CSV2JSON = "mlexpt.cli:csv2json"
+RunExperiments = "mlexpt.cli:run_experiment"
