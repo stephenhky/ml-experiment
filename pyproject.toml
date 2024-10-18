@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml-experiment"
+version = "0.0.9"
+authors = [
+    {name = "Kwan Yuet Stephen Ho", email = "stephenhky@yahoo.com.hk"}
+]
+description = "Machine Learning Experiment Framework"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "MIT"}
+keywords = ["machine learning", "artificial intelligence"]
+requires-python = ">=3.7"
+classifiers = [
+      "Topic :: Scientific/Engineering :: Artificial Intelligence",
+      "Topic :: Scientific/Engineering :: Mathematics",
+      "Topic :: Software Development :: Libraries :: Python Modules",
+      "Topic :: Software Development :: Version Control :: Git",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "License :: OSI Approved :: MIT License",
+      "Intended Audience :: Science/Research",
+      "Intended Audience :: Developers"
+]
+dependencies = [
+      "numpy>=1.18.0",
+      "pandas>=1.0.0",
+      "torch>=1.5.0",
+      "tqdm>=4.46.0",
+      "scikit-learn>=0.23.0",
+      "scipy>=1.4.0",
+      "umap-learn>=0.4.4"
+]
+
+[project.urls]
+Repository = "https://github.com/stephenhky/ml-experiment"
+Issues = "https://github.com/stephenhky/ml-experiment/issues"
+Documentation = "https://ml-experiment.readthedocs.io/"
+
+[tool.setuptools]
+packages = ["mlexpt", "mlexpt.utils", "mlexpt.data", "mlexpt.metrics", "mlexpt.ml", "mlexpt.ml.classifiers", "mlexpt.ml.encoders"]
+zip-safe = false
+
+[project.optional-dependencies]
+test = ["unittest"]
+
+[project.scripts]
+CSV2JSON = "mlexpt.cli:csv2json"
+RunExperiments = "mlexpt.cli:run_experiment"
